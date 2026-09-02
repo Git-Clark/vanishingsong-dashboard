@@ -4,7 +4,7 @@
 // both the Edge middleware runtime and Node.js API routes).
 
 export const COOKIE_NAME = "vs_auth";
-export const COOKIE_MAX_AGE_SECONDS = 60 * 60 * 24 * 30; // 30 days
+export const COOKIE_MAX_AGE_SECONDS = 60 * 60 * 24; // 1 day
 
 function getSecret(): string {
   // Falls back to a fixed dev-only string so local dev works even before
