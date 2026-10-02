@@ -9,6 +9,7 @@ const NAV_PAGES: { label: string; href: string }[] = [
   { label: "Promo Campaign", href: "/promo-campaign" },
   { label: "Festivals", href: "/festivals" },
   { label: "Media Contacts", href: "/media-contacts" },
+  { label: "Publish", href: "/publish" },
 ];
 
 export default function Nav() {
