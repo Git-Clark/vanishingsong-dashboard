@@ -7,8 +7,16 @@ import { formatShort, monthLabel } from "@/lib/dates";
 const CATEGORY_FILTERS: { key: CalKind; label: string }[] = [
   { key: "notify", label: "Festival Notifications" },
   { key: "event", label: "Festival Events" },
+  { key: "screening", label: "Confirmed Screenings" },
   { key: "post", label: "Social Media Posts" },
 ];
+
+const DOT_CLASS: Record<CalKind, string> = {
+  notify: "notify",
+  event: "event",
+  screening: "screening",
+  post: "post",
+};
 
 export default function CalendarList({
   entries,
@@ -90,6 +98,9 @@ export default function CalendarList({
   const hasPostEntries = entries.some((e) => e.kind === "post");
   const showPostEmpty = activeCats.has("post") && !hasPostEntries;
 
+  const hasScreeningEntries = entries.some((e) => e.kind === "screening");
+  const showScreeningEmpty = activeCats.has("screening") && !hasScreeningEntries;
+
   return (
     <>
       <div className="filter-row" role="group" aria-label="Filter by category">
@@ -115,9 +126,20 @@ export default function CalendarList({
           <i className="i-event"></i> Festival event
         </span>
         <span>
+          <i className="i-screening"></i> Confirmed screening
+        </span>
+        <span>
           <i className="i-post"></i> Social media post
         </span>
       </div>
+
+      {showScreeningEmpty && (
+        <div className="empty-state" style={{ marginBottom: 26 }}>
+          <strong>No confirmed screenings yet</strong>
+          Screenings appear here once their row on the Screenings sheet is marked Confirmed. Pending
+          and Not Contacted rows stay on the Screenings page.
+        </div>
+      )}
 
       {showPostEmpty && (
         <div className="empty-state" style={{ marginBottom: 26 }}>
@@ -134,7 +156,7 @@ export default function CalendarList({
               {month.rows.map((row, i) =>
                 row.type === "today" ? (
                   <div className="cal-today" key={`today-${i}`}>
-                    Today — {formatShort(todayIso, true)}
+                    Today, {formatShort(todayIso, true)}
                   </div>
                 ) : (
                   <CalItem key={`${row.entry.kind}-${row.entry.title}-${row.entry.dateIso}-${i}`} entry={row.entry} isPast={row.entry.dateIso < todayIso} />
@@ -149,7 +171,7 @@ export default function CalendarList({
 }
 
 function CalItem({ entry, isPast }: { entry: CalEntry; isPast: boolean }) {
-  const dotCls = entry.kind === "notify" ? "notify" : entry.kind === "event" ? "event" : "post";
+  const dotCls = DOT_CLASS[entry.kind] ?? "post";
   const typeLabel = entry.kind === "notify" ? "Notification expected" : entry.meta;
   return (
     <li className={`cal-item${isPast ? " is-past" : ""}`}>

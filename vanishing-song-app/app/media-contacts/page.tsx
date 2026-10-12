@@ -1,13 +1,42 @@
 import Masthead from "@/components/Masthead";
 import Footer from "@/components/Footer";
-import { getContacts } from "@/lib/sheets";
+import TopContactsSections from "@/components/TopContactsSections";
+import MediaListTable from "@/components/MediaListTable";
+import TableModalButton from "@/components/TableModalButton";
+import { getMediaList, getTopContacts, getContacted } from "@/lib/sheets";
 
-export const revalidate = 300; // 5 min ISR — reflects sheet edits without a redeploy
+export const revalidate = 300; // 5 min ISR, reflects sheet edits without a redeploy
+
+// Columns of the Contacted tab, in the order the sheet has them. Nothing is
+// remapped, the modal shows that tab as it comes.
+const CONTACTED_COLUMNS = [
+  "Region",
+  "Publication",
+  "Content Type",
+  "Name",
+  "Email",
+  "Recent Articles",
+  "Notes / Other Involvements",
+];
 
 export default async function MediaContactsPage() {
-  const regions = await getContacts();
-  const total = regions.reduce((sum, r) => sum + r.contacts.length, 0);
-  const reachedOut = Math.min(total, 2); // see Media Outreach on Home for real status tracking
+  const [mediaList, topSections, contacted] = await Promise.all([
+    getMediaList(),
+    getTopContacts(),
+    getContacted(),
+  ]);
+
+  const contactedRows = contacted.map((c) => [
+    c.region,
+    c.publication,
+    c.contentType,
+    c.name,
+    c.email,
+    c.recentArticles,
+    c.notes,
+  ]);
+
+  const topContactNames = topSections.flatMap((s) => s.contacts.map((c) => c.name));
 
   return (
     <div className="page">
@@ -17,71 +46,24 @@ export default async function MediaContactsPage() {
         <div>
           <h2>Media Contacts</h2>
           <div className="page-caption">
-            Full press directory, grouped by region. Outreach status for these contacts lives on the
-            Home page.
+            The press directory, read live from the Media Contacts spreadsheet. Top Contacts first,
+            then the full Media List with search and per-column filters.
           </div>
         </div>
+        <TableModalButton
+          label="Contacted"
+          title="Contacted"
+          caption="Everyone we have already reached out to, straight from the Contacted tab."
+          columns={CONTACTED_COLUMNS}
+          rows={contactedRows}
+          emptyTitle="No outreach logged yet"
+          emptyHint="The Contacted tab has its headers in place but no rows. Anyone added there will show up in this window."
+        />
       </div>
 
-      <section className="stat-grid" aria-label="Contact summary" style={{ gridTemplateColumns: "repeat(3, 1fr)" }}>
-        <div className="stat-card accent">
-          <div className="stat-label">Contacts on File</div>
-          <div className="stat-value num">{total}</div>
-          <div className="stat-sub">Sample entries — sheet is just getting started</div>
-        </div>
-        <div className="stat-card">
-          <div className="stat-label">Regions</div>
-          <div className="stat-value num">{regions.length}</div>
-          <div className="stat-sub">{regions.map((r) => r.region).join(", ")}</div>
-        </div>
-        <div className="stat-card">
-          <div className="stat-label">Reached Out</div>
-          <div className="stat-value num">{reachedOut}</div>
-          <div className="stat-sub">See Media Outreach on Home for status</div>
-        </div>
-      </section>
+      <TopContactsSections sections={topSections} />
 
-      <div className="panel">
-        {regions.map((r) => (
-          <div className="region-group" key={r.region}>
-            <div className="region-heading">
-              <h3>{r.region}</h3>
-              <span className="n">
-                {r.contacts.length} contact{r.contacts.length !== 1 ? "s" : ""}
-              </span>
-            </div>
-            {r.contacts.map((c) => (
-              <div className="contact-row" key={c.email || c.name}>
-                <div>
-                  <div className="contact-name">{c.name}</div>
-                  <div className="contact-pub">{c.publication}</div>
-                </div>
-                <div>
-                  <div className="contact-field-label">Email</div>
-                  <div className="contact-email">{c.email}</div>
-                </div>
-                <div>
-                  <div className="contact-field-label">Recent Articles</div>
-                  <div className="contact-articles">
-                    {c.articles.map((a, i) => (
-                      <span key={a}>
-                        <a href={`https://${a}`} target="_blank" rel="noopener">
-                          {a}
-                        </a>
-                        {i < c.articles.length - 1 ? " " : ""}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-                <div>
-                  <div className="contact-field-label">Notes / Other Involvements</div>
-                  <div className="contact-notes">{c.notes}</div>
-                </div>
-              </div>
-            ))}
-          </div>
-        ))}
-      </div>
+      <MediaListTable contacts={mediaList} topContactNames={topContactNames} />
 
       <Footer />
     </div>

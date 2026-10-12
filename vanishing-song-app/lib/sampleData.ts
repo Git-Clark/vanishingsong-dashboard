@@ -1,7 +1,13 @@
-// Bundled sample/mock data, used as a fallback whenever the Google Sheets
-// env vars are not configured. Mirrors the dataset baked into the original
-// design draft (shared.py FESTIVALS, build_contacts.py CONTACTS).
-// Do not edit festival facts here casually — this is real campaign data.
+// Shared row types for every sheet the dashboard reads, plus the bundled
+// sample festival list.
+//
+// The festival list is used as a fallback whenever the Festivals sheet is not
+// configured, so the app always has something to show. Every other dataset
+// (social posts, the three contact tabs, screenings) starts out as an empty
+// array, because those tabs are either empty in the owner's spreadsheets or
+// read live once the sheets are shared with the service account.
+//
+// Do not edit festival facts here casually, this is real campaign data.
 
 export type FestivalStatus = "Pending" | "Not accepted" | "Accepted";
 
@@ -56,60 +62,134 @@ export const SAMPLE_FESTIVALS: Festival[] = [
   { name: "San Francisco Documentary Festival", notifyIso: "2027-05-11", eventIso: "2027-06-03", location: "California", status: "Pending" },
 ];
 
-export interface MediaContact {
+/* ============ MEDIA CONTACTS ============
+   Three tabs, three different shapes. "Media List" is the full directory,
+   "Top Contacts" is a shorter list grouped under its own section headings,
+   and "Contacted" is the outreach log. */
+
+/** One row of the "Media List" tab. The sheet carries three Category columns,
+ *  collapsed here into a single array of the values that were filled in. */
+export interface MediaListContact {
+  categories: string[];
+  name: string;
+  role: string;
+  organization: string;
+  email: string;
+  socialOrContactPage: string;
+  region: string;
+  contentType: string;
+  recentWork: string;
+  notes: string;
+  sourceUrl: string;
+}
+
+/** One row of the "Top Contacts" tab. */
+export interface TopContact {
+  region: string;
+  teamMember: string;
+  categories: string[];
   publication: string;
   name: string;
+  role: string;
   email: string;
-  articles: string[]; // bare domains/paths, rendered as https://<article>
+  socialOrContactPage: string;
+  contentType: string;
+  recentWork: string;
   notes: string;
 }
 
-export interface MediaRegion {
-  region: string;
-  contacts: MediaContact[];
+/** The "Top Contacts" tab is divided by one-cell section heading rows, for
+ *  example "Print/Online Media Contacts". Headings are read from the sheet,
+ *  so the owner can add more without a code change. */
+export interface TopContactSection {
+  title: string;
+  contacts: TopContact[];
 }
 
-// region -> list of contacts
-export const SAMPLE_CONTACTS: MediaRegion[] = [
-  {
-    region: "Hong Kong",
-    contacts: [
-      { publication: "SFM Times", name: "Ruby Yang", email: "r@sfm.com", articles: ["www.websfm.com"], notes: "Likes Gibbons" },
-    ],
-  },
-  {
-    region: "United States",
-    contacts: [
-      { publication: "Example Paper", name: "Mt. James", email: "mail@usa.gov", articles: ["website.blog/1", "website.blog/123", "ft.uk.co"], notes: "Friends with Peter" },
-    ],
-  },
-  {
-    region: "United Kingdom",
-    contacts: [
-      { publication: "Isle of News", name: "Sir Rip Tear", email: "lord@lot.com", articles: ["captainnews.com/1", "captainnews.com/2", "captainnews.com/3"], notes: "Devout environmentalist" },
-    ],
-  },
-];
+/** One row of the "Contacted" tab, shown as-is in a modal. */
+export interface ContactedEntry {
+  region: string;
+  publication: string;
+  contentType: string;
+  name: string;
+  email: string;
+  recentArticles: string;
+  notes: string;
+}
+
+export const SAMPLE_MEDIA_LIST: MediaListContact[] = [];
+export const SAMPLE_TOP_CONTACTS: TopContactSection[] = [];
+export const SAMPLE_CONTACTED: ContactedEntry[] = [];
+
+/* ============ SOCIAL ============ */
 
 export type SocialChannel = "instagram" | "facebook" | "linkedin" | "website" | "rednote" | "wechat";
 
-export type PostStatus = "Scheduled" | "Posted" | "Draft" | "Needs Approval";
+/** Which tab of the Social spreadsheet a post came from. */
+export type SocialSection = "upcoming" | "completed";
 
 export interface SocialPost {
-  channel: SocialChannel;
-  /** ISO date (YYYY-MM-DD), Hong Kong time. */
+  section: SocialSection;
+  /** The six-channel key the sheet's "Social" value maps onto, or null when
+   *  the value is not one of the six. Null posts are still kept, they just do
+   *  not belong to any channel tab. */
+  channel: SocialChannel | null;
+  /** The "Social" value exactly as the sheet spells it, for display. */
+  channelName: string;
+  /** ISO date (YYYY-MM-DD), Hong Kong time, or "" when the cell is blank or
+   *  written in a form we could not read. */
   postDateIso: string;
-  status: PostStatus;
+  /** The date cell exactly as typed, shown when postDateIso is empty. */
+  postDateRaw: string;
+  /** Free text from the sheet. Any value is allowed, it only drives chip colour. */
+  status: string;
   topic: string;
   copy: string;
   visual: string;
+  /** Completed tab only. */
   postLink: string;
+  views: string;
+  hearts: string;
+  comments: string;
 }
 
-// No posts have been scheduled yet in the source design — every channel
-// tab renders its empty state. Kept as an empty array so the data layer
-// has a real (if currently empty) shape to fill in once the sheet exists.
 export const SAMPLE_SOCIAL_POSTS: SocialPost[] = [];
+
+/* ============ SCREENINGS ============ */
+
+/** The three values the "Confirmed" column takes. */
+export type ScreeningStatus = "Confirmed" | "Pending" | "Not Contacted";
+
+export interface UpcomingScreening {
+  /** Normalised status, or null when the cell holds something unexpected. */
+  status: ScreeningStatus | null;
+  /** The "Confirmed" cell exactly as typed. */
+  statusRaw: string;
+  dateIso: string;
+  dateRaw: string;
+  location: string;
+  venue: string;
+  size: string;
+  qa: string;
+  contactPerson: string;
+  contactInfo: string;
+  website: string;
+  notes: string;
+}
+
+export interface CompletedScreening {
+  dateIso: string;
+  dateRaw: string;
+  location: string;
+  venue: string;
+  size: string;
+  contactPerson: string;
+  contactInfo: string;
+  notes: string;
+}
+
+export const SAMPLE_UPCOMING_SCREENINGS: UpcomingScreening[] = [];
+export const SAMPLE_COMPLETED_SCREENINGS: CompletedScreening[] = [];
 
 export const CHANNELS: { slug: SocialChannel; en: string; cn: string }[] = [
   { slug: "instagram", en: "Instagram", cn: "" },

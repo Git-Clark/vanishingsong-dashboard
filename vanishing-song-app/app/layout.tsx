@@ -3,7 +3,7 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title: "Vanishing Song Dashboard",
-  description: "Internal campaign dashboard for The Vanishing Song — festival submissions, promo calendar, and media contacts.",
+  description: "Internal campaign dashboard for The Vanishing Song: festival submissions, promo calendar, and media contacts.",
   robots: {
     index: false,
     follow: false,

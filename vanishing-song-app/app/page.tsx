@@ -1,10 +1,10 @@
 import Masthead from "@/components/Masthead";
 import Footer from "@/components/Footer";
-import { getFestivals, getContacts, getSocialPosts } from "@/lib/sheets";
+import { getFestivals, getMediaList, getSocialPosts } from "@/lib/sheets";
 import { CHANNELS } from "@/lib/sampleData";
 import { daysUntil, formatShort, parseIsoDate, todayHK } from "@/lib/dates";
 
-export const revalidate = 300; // 5 min ISR — reflects sheet edits without a redeploy
+export const revalidate = 300; // 5 min ISR, reflects sheet edits without a redeploy
 
 const STATUS_CLASS: Record<string, string> = {
   Pending: "pending",
@@ -23,9 +23,9 @@ const OUTREACH_PATTERN: { label: string; cls: string }[] = [
 ];
 
 export default async function HomePage() {
-  const [festivals, contactRegions, socialPosts] = await Promise.all([
+  const [festivals, mediaContacts, socialPosts] = await Promise.all([
     getFestivals(),
-    getContacts(),
+    getMediaList(),
     getSocialPosts(),
   ]);
 
@@ -63,7 +63,7 @@ export default async function HomePage() {
     eventsSub = activeThisMonth.map((f) => `${f.name}, ${formatShort(f.eventIso)}`).join("; ");
   }
   if (declinedThisMonth.length) {
-    eventsSub += ` — ${declinedThisMonth
+    eventsSub += `. ${declinedThisMonth
       .map((f) => `${f.name} passed on us ${formatShort(f.eventIso)}`)
       .join("; ")}`;
   }
@@ -78,7 +78,9 @@ export default async function HomePage() {
     .slice(0, 5);
 
   // ---- Media Outreach (illustrative) ----
-  const flatContacts = contactRegions.flatMap((r) => r.contacts);
+  // Home is a snapshot, so show only the first few. The full directory of 113
+  // contacts lives on the Media Contacts page.
+  const flatContacts = mediaContacts.slice(0, 5);
 
   return (
     <div className="page">
@@ -96,7 +98,7 @@ export default async function HomePage() {
                 </small>
               </>
             ) : (
-              "—"
+              "-"
             )}
           </div>
           <div className="stat-sub">{nextNotify ? nextNotify.name : "No upcoming notifications on file"}</div>
@@ -152,7 +154,7 @@ export default async function HomePage() {
                 Next {nextFive.length} of {festivals.length}
               </span>
             </div>
-            <p className="panel-caption">When we expect to hear back — all of these are already submitted.</p>
+            <p className="panel-caption">When we expect to hear back. All of these are already submitted.</p>
             <div className="table-wrap">
               <table className="deadlines">
                 <thead>
@@ -212,9 +214,9 @@ export default async function HomePage() {
                   <li key={i}>
                     <span className="checkbox"></span>
                     <div>
-                      <div className="fest-name">{p.topic || p.channel}</div>
+                      <div className="fest-name">{p.topic || p.channelName}</div>
                       <div className="fest-loc">
-                        {formatShort(p.postDateIso)} · {p.channel}
+                        {formatShort(p.postDateIso)} · {p.channelName}
                       </div>
                     </div>
                   </li>
@@ -234,11 +236,13 @@ export default async function HomePage() {
           <div className="panel">
             <div className="panel-head">
               <h2 className="panel-title">Media Outreach</h2>
-              <span className="panel-note">{flatContacts.length} contacts</span>
+              <span className="panel-note">
+                {flatContacts.length} of {mediaContacts.length}
+              </span>
             </div>
             <p className="panel-caption">
-              Illustrative — needs Content Type and Status columns on the Media Contacts sheet to go
-              live.
+              The first few from the Media List. Status is illustrative until the sheet carries an
+              outreach status column. Full directory on the Media Contacts page.
             </p>
             <div className="table-wrap">
               <table className="outreach">
@@ -255,9 +259,9 @@ export default async function HomePage() {
                     const outreach = OUTREACH_PATTERN[i % OUTREACH_PATTERN.length];
                     return (
                       <tr key={c.email || i}>
-                        <td className="cell-strong">{c.publication}</td>
+                        <td className="cell-strong">{c.organization}</td>
                         <td className="cell-secondary">{c.name}</td>
-                        <td className="cell-secondary">Print</td>
+                        <td className="cell-secondary">{c.contentType || "-"}</td>
                         <td>
                           <span className={`status-chip ${outreach.cls}`}>{outreach.label}</span>
                         </td>

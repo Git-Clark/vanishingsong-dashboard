@@ -1,6 +1,6 @@
-import type { Festival, SocialPost } from "./sampleData";
+import type { Festival, SocialPost, UpcomingScreening } from "./sampleData";
 
-export type CalKind = "notify" | "event" | "post";
+export type CalKind = "notify" | "event" | "screening" | "post";
 export type CalStatusClass = "pending" | "good" | "critical" | "neutral";
 
 export interface CalEntry {
@@ -25,7 +25,11 @@ const POST_STATUS_CLASS: Record<string, CalStatusClass> = {
   "Needs Approval": "critical",
 };
 
-export function buildCalendarEntries(festivals: Festival[], posts: SocialPost[]): CalEntry[] {
+export function buildCalendarEntries(
+  festivals: Festival[],
+  posts: SocialPost[],
+  screenings: UpcomingScreening[] = []
+): CalEntry[] {
   const entries: CalEntry[] = [];
 
   for (const f of festivals) {
@@ -51,14 +55,29 @@ export function buildCalendarEntries(festivals: Festival[], posts: SocialPost[])
     }
   }
 
+  // Only screenings the Screenings sheet marks as Confirmed reach the
+  // calendar. Pending and Not Contacted rows stay on the Screenings page.
+  for (const s of screenings) {
+    if (s.status !== "Confirmed") continue;
+    if (!s.dateIso) continue;
+    entries.push({
+      dateIso: s.dateIso,
+      kind: "screening",
+      title: s.venue || s.location || "Screening",
+      meta: [s.location, s.qa ? `Q and A: ${s.qa}` : ""].filter(Boolean).join(" · ") || "Screening",
+      statusLabel: "Confirmed",
+      statusClass: "good",
+    });
+  }
+
   for (const p of posts) {
     if (!p.postDateIso) continue;
     entries.push({
       dateIso: p.postDateIso,
       kind: "post",
-      title: p.topic || p.channel,
-      meta: p.channel,
-      statusLabel: p.status,
+      title: p.topic || p.channelName,
+      meta: p.channelName,
+      statusLabel: p.status || "Scheduled",
       statusClass: POST_STATUS_CLASS[p.status] ?? "neutral",
     });
   }

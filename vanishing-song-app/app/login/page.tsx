@@ -9,7 +9,7 @@ export default function LoginPage({
     <div className="login-shell">
       <div className="login-card">
         <div className="login-eyebrow">
-          <span className="dot">●</span> Internal — Not for Distribution
+          <span className="dot">●</span> Internal, Not for Distribution
         </div>
         <div className="login-title">The Vanishing Song</div>
         <div className="login-subtitle">Campaign Dashboard · Producer &amp; Director</div>

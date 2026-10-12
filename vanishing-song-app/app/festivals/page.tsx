@@ -3,7 +3,7 @@ import Footer from "@/components/Footer";
 import FestivalsTable from "@/components/FestivalsTable";
 import { getFestivals } from "@/lib/sheets";
 
-export const revalidate = 300; // 5 min ISR — reflects sheet edits without a redeploy
+export const revalidate = 300; // 5 min ISR, reflects sheet edits without a redeploy
 
 export default async function FestivalsPage() {
   const festivals = await getFestivals();
@@ -19,7 +19,7 @@ export default async function FestivalsPage() {
         <div>
           <h2>Festivals</h2>
           <div className="page-caption">
-            Submission matrix across every festival we&rsquo;ve entered — notification dates, event
+            Submission matrix across every festival we&rsquo;ve entered, with notification dates, event
             dates, and current status.
           </div>
         </div>
@@ -52,7 +52,7 @@ export default async function FestivalsPage() {
         <span>🏆</span>
         <div>
           <strong>Oscar Qualifying column is unconfirmed.</strong> I haven&rsquo;t marked any festival
-          as an Academy-qualifying run — that needs to be checked against the current Academy rules
+          as an Academy-qualifying run. That needs to be checked against the current Academy rules
           for this film&rsquo;s category before it&rsquo;s trusted for campaign strategy. Ask me to
           research it, or fill it in directly on the sheet.
         </div>

@@ -10,7 +10,7 @@ export default function Masthead({ variant = "inner" }: { variant?: "home" | "in
       <div className="masthead-top">
         <div className="masthead-id">
           <div className="eyebrow">
-            <span className="dot">●</span> Internal — Not for Distribution
+            <span className="dot">●</span> Internal, Not for Distribution
           </div>
           <h1 className="film-title">The Vanishing Song</h1>
           <div className="film-subtitle">Campaign Dashboard</div>

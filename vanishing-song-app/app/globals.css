@@ -42,6 +42,9 @@
   --status-critical: #c15b45;
   --status-critical-bg: rgba(193, 91, 69, 0.14);
   --status-neutral: #4a4a4a;
+  /* Confirmed screenings on the calendar, kept clear of the festival blue,
+     the notification orange and the social green. */
+  --status-screening: #a78bfa;
 
   --shadow: 0 1px 0 rgba(0, 0, 0, 0.4);
   color-scheme: dark;
@@ -625,6 +628,9 @@ footer.page-footer {
 .cal-legend .i-event {
   background: var(--accent);
 }
+.cal-legend .i-screening {
+  background: var(--status-screening);
+}
 .cal-legend .i-post {
   background: var(--status-good);
 }
@@ -675,6 +681,9 @@ footer.page-footer {
 }
 .cal-dot.event {
   background: var(--accent);
+}
+.cal-dot.screening {
+  background: var(--status-screening);
 }
 .cal-dot.post {
   background: var(--status-good);
@@ -984,293 +993,292 @@ footer.page-footer {
   }
 }
 
-/* ============ PUBLISH PAGE ============
-   Connection panel, composer, two-step confirm, and per-destination results.
-   Inputs follow the login card's field treatment; buttons follow .login-submit
-   and .filter-pill so the page reads as part of the same system. */
-.conn-list {
-  list-style: none;
-  margin: 14px 0 0;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-.conn-row {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  flex-wrap: wrap;
-  padding: 12px 4px;
-  border-bottom: 1px solid var(--border-soft);
-}
-.conn-row:last-child {
-  border-bottom: none;
-}
-.conn-detail {
-  font-size: 13px;
+/* ============ SMALL UTILITIES ============ */
+.empty-state code {
+  font-size: 11.5px;
   color: var(--text-secondary);
-  line-height: 1.5;
-  min-width: 0;
-  flex: 1 1 240px;
+}
+/* Visible to screen readers only, used to label icon-only controls. */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+.cell-link {
+  color: var(--accent);
+  text-decoration: none;
+}
+.cell-link:hover {
+  text-decoration: underline;
+}
+/* Long free-text cells wrap instead of stretching the table forever. */
+.wrap-cell {
+  max-width: 260px;
+  white-space: normal;
+  word-break: break-word;
 }
 
-.compose-field {
-  margin: 0 0 20px;
+/* ============ MODAL ============
+   One shared treatment for the Contacted list on Media Contacts and the
+   Completed list on Screenings. Closes on the X, on the backdrop and on
+   Escape, see components/TableModalButton.tsx. */
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  background: rgba(0, 0, 0, 0.68);
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 48px 20px;
+  overflow-y: auto;
 }
-.compose-label-row {
+.modal-box {
+  width: 100%;
+  max-width: 1040px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 22px 22px 20px;
+  box-shadow: 0 18px 50px rgba(0, 0, 0, 0.55);
+}
+.modal-head {
   display: flex;
   justify-content: space-between;
-  align-items: baseline;
+  align-items: flex-start;
+  gap: 16px;
+}
+.modal-caption {
+  margin: 5px 0 0;
+}
+.modal-close {
+  flex: none;
+  font: inherit;
+  font-size: 14px;
+  line-height: 1;
+  width: 32px;
+  height: 32px;
+  color: var(--text-secondary);
+  background: var(--surface-raised);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  cursor: pointer;
+  transition: color 0.15s ease, border-color 0.15s ease;
+}
+.modal-close:hover {
+  color: var(--text-primary);
+  border-color: var(--accent);
+}
+.modal-body {
+  margin-top: 16px;
+}
+
+/* ============ COLLAPSIBLE SECTION (Top Contacts) ============ */
+.collapse-panel {
+  margin: 0 0 16px;
+}
+.collapse-bar {
+  list-style: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  background: var(--surface-raised);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 14px 18px;
+  transition: border-color 0.15s ease;
+}
+.collapse-bar::-webkit-details-marker {
+  display: none;
+}
+.collapse-bar::before {
+  content: "\25B6";
+  flex: none;
+  font-size: 10px;
+  color: var(--accent);
+  transition: transform 0.15s ease;
+}
+.collapse-panel[open] > .collapse-bar::before {
+  transform: rotate(90deg);
+}
+.collapse-bar:hover {
+  border-color: var(--accent);
+}
+.collapse-label {
+  font-family: Georgia, "Times New Roman", Times, serif;
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+.collapse-note {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+.collapse-body {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-top: none;
+  border-radius: 0 0 4px 4px;
+  padding: 20px 22px;
+}
+
+/* ============ SECTION TOOLS (search, column controls, pager) ============ */
+.section-head {
+  align-items: center;
+  flex-wrap: wrap;
   gap: 12px;
 }
-.compose-label {
-  display: block;
+.section-tools {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.search-label {
+  display: inline-flex;
+}
+.search-input {
+  width: 240px;
+  max-width: 100%;
+  background: var(--bg-rise);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 9px 15px;
+  font-family: inherit;
+  font-size: 13.5px;
+  color: var(--text-primary);
+}
+.search-input::placeholder {
+  color: var(--text-muted);
+}
+.search-input:focus-visible {
+  outline: 2px solid var(--accent-strong);
+  outline-offset: 1px;
+}
+
+/* A fixed-height table that scrolls inside itself, header row pinned. */
+.table-scroll {
+  max-height: 560px;
+  overflow: auto;
+  border: 1px solid var(--border-soft);
+  border-radius: 4px;
+}
+table.sticky-head {
+  min-width: 1080px;
+}
+table.sticky-head thead th {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  background: var(--surface);
+  padding: 10px 10px 10px 8px;
+  vertical-align: bottom;
+}
+table.sticky-head td {
+  padding: 11px 10px 11px 8px;
+}
+.col-filter-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.col-filter {
+  font-family: inherit;
+  font-size: 11.5px;
+  font-weight: 600;
+  letter-spacing: 0;
+  text-transform: none;
+  max-width: 160px;
+  color: var(--text-secondary);
+  background: var(--bg-rise);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 5px 6px;
+  cursor: pointer;
+}
+.col-filter:hover {
+  border-color: var(--accent);
+}
+.col-sort {
+  font: inherit;
   font-size: 11px;
   font-weight: 700;
   letter-spacing: 0.06em;
   text-transform: uppercase;
   color: var(--text-muted);
-  margin-bottom: 8px;
-}
-.compose-input {
-  width: 100%;
-  background: var(--bg-rise);
-  border: 1px solid var(--border);
-  border-radius: 6px;
-  padding: 11px 13px;
-  font-family: inherit;
-  font-size: 14px;
-  color: var(--text-primary);
-}
-.compose-input:focus-visible {
-  outline: 2px solid var(--accent-strong);
-  outline-offset: 1px;
-}
-.compose-input:disabled {
-  opacity: 0.55;
-  cursor: not-allowed;
-}
-.compose-textarea {
-  resize: vertical;
-  line-height: 1.55;
-  min-height: 120px;
-}
-.compose-file {
-  padding: 9px 11px;
-  font-size: 13px;
-  color: var(--text-secondary);
-}
-.char-counter {
-  font-family: "Inter", sans-serif;
-  font-variant-numeric: tabular-nums;
-  font-size: 11.5px;
-  font-weight: 700;
-  color: var(--text-muted);
-}
-.char-counter.is-near {
-  color: var(--status-pending);
-}
-.char-counter.is-over {
-  color: var(--status-critical);
-}
-.compose-hint {
-  margin-top: 7px;
-  font-size: 12px;
-  color: var(--text-muted);
-  line-height: 1.55;
-}
-.compose-hint code,
-.empty-state code {
-  font-size: 11.5px;
-  color: var(--text-secondary);
-}
-.compose-error {
-  margin-top: 8px;
-  font-size: 12.5px;
-  color: var(--status-critical);
-  line-height: 1.5;
-}
-.compose-note-good {
-  margin-top: 8px;
-  font-size: 12.5px;
-  color: var(--status-good);
-  line-height: 1.5;
-}
-
-.compose-actions {
-  display: flex;
-  gap: 10px;
-  flex-wrap: wrap;
-  margin-top: 22px;
-}
-.compose-btn {
-  font: inherit;
-  font-size: 14px;
-  font-weight: 700;
-  color: var(--bg);
-  background: var(--accent);
-  border: 1px solid var(--accent);
-  border-radius: 999px;
-  padding: 11px 20px;
+  background: none;
+  border: none;
+  padding: 0;
   cursor: pointer;
-  transition: opacity 0.15s ease;
-}
-.compose-btn:hover {
-  opacity: 0.88;
-}
-.compose-btn:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-.compose-btn.ghost {
-  color: var(--text-secondary);
-  background: transparent;
-  border-color: var(--border);
-}
-.compose-btn.ghost:hover {
-  color: var(--text-primary);
-  border-color: var(--accent);
-  opacity: 1;
-}
-.compose-btn.danger {
-  color: #ffffff;
-  background: var(--status-critical);
-  border-color: var(--status-critical);
-}
-
-.dest-row {
-  display: flex;
-  gap: 8px;
-  flex-wrap: wrap;
-}
-.dest-option {
   display: inline-flex;
   align-items: center;
-  gap: 9px;
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--text-secondary);
-  background: var(--surface-raised);
-  border: 1px solid var(--border);
-  border-radius: 999px;
-  padding: 9px 16px;
-  cursor: pointer;
-  transition: border-color 0.15s ease, color 0.15s ease;
+  gap: 6px;
 }
-.dest-option:hover {
-  border-color: var(--accent);
+.col-sort:hover {
   color: var(--text-primary);
 }
-.dest-option.is-on {
-  border-color: var(--accent);
-  color: var(--text-primary);
-  background: var(--accent-wash);
+.col-arrow {
+  color: var(--accent);
+  font-size: 11px;
 }
-.dest-option input {
-  accent-color: var(--accent);
-  width: 15px;
-  height: 15px;
-  margin: 0;
-}
-.dest-warn {
-  font-size: 10.5px;
-  font-weight: 700;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  color: var(--status-critical);
-}
-
-.confirm-panel {
-  border-left: 3px solid var(--status-critical);
-}
-.confirm-grid {
-  display: grid;
-  grid-template-columns: 1.1fr 1fr;
-  gap: 24px;
-  margin-top: 18px;
-  align-items: start;
-}
-.confirm-dests {
-  display: flex;
-  gap: 8px;
-  flex-wrap: wrap;
-}
-.confirm-caption {
-  background: var(--bg-rise);
-  border: 1px solid var(--border);
-  border-radius: 6px;
-  padding: 14px 15px;
-  font-size: 14px;
-  line-height: 1.6;
-  color: var(--text-primary);
-  white-space: pre-wrap;
-  word-break: break-word;
-  max-height: 340px;
-  overflow-y: auto;
-}
-.confirm-url {
-  margin-top: 8px;
-  font-size: 11.5px;
-  color: var(--text-muted);
-  word-break: break-all;
-  line-height: 1.5;
-}
-.confirm-media {
-  display: block;
-  width: 100%;
-  max-height: 340px;
-  object-fit: contain;
-  background: var(--bg-rise);
-  border: 1px solid var(--border);
-  border-radius: 6px;
-}
-
-.result-list {
-  list-style: none;
-  margin: 16px 0 0;
-  padding: 0;
+.cat-stack {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 3px;
+  min-width: 110px;
 }
-.result-row {
-  display: flex;
-  align-items: flex-start;
-  gap: 14px;
-  flex-wrap: wrap;
-  padding: 13px 4px;
-  border-bottom: 1px solid var(--border-soft);
-}
-.result-row:last-child {
-  border-bottom: none;
-}
-.result-body {
-  flex: 1 1 240px;
-  min-width: 0;
-}
-.result-id {
-  font-size: 13px;
+.cat-line {
+  font-size: 12px;
   color: var(--text-secondary);
-  word-break: break-all;
+  line-height: 1.35;
 }
-.result-link {
-  display: inline-block;
-  margin-top: 5px;
+/* Marks a Media List row whose person is also on the Top Contacts tab. */
+.top-star {
+  color: var(--status-pending);
   font-size: 13px;
+  line-height: 1;
+  margin-top: 2px;
+}
+.pager {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-top: 16px;
+}
+.pager-info {
+  font-size: 12.5px;
   font-weight: 600;
-  color: var(--accent);
-  text-decoration: none;
+  color: var(--text-muted);
 }
-.result-error {
-  font-size: 13px;
-  color: var(--status-critical);
-  line-height: 1.55;
-  word-break: break-word;
+.filter-pill:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+.filter-pill:disabled:hover {
+  border-color: var(--border);
+  color: var(--text-secondary);
 }
 
-@media (max-width: 900px) {
-  .confirm-grid {
-    grid-template-columns: 1fr;
+@media (max-width: 560px) {
+  .search-input {
+    width: 100%;
+  }
+  .section-tools {
+    width: 100%;
+  }
+  .modal-backdrop {
+    padding: 20px 12px;
+  }
+  .collapse-body {
+    padding: 16px 14px;
   }
 }
