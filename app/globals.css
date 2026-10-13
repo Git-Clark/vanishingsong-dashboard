@@ -992,23 +992,28 @@ footer.page-footer {
 .search-label {
   display: inline-flex;
 }
+/* Deliberately light against the dark page, so the one place you type is
+   obvious. Black text on a pale fill, on desktop and phone alike. */
 .search-input {
   width: 240px;
   max-width: 100%;
-  background: var(--bg-rise);
-  border: 1px solid var(--border);
+  background: #e9e9ec;
+  border: 1px solid #c9c9d0;
   border-radius: 999px;
   padding: 9px 15px;
   font-family: inherit;
   font-size: 13.5px;
-  color: var(--text-primary);
+  color: #101013;
 }
 .search-input::placeholder {
-  color: var(--text-muted);
+  /* Dark enough to read on the pale fill, still clearly placeholder text. */
+  color: #5a5a66;
+  opacity: 1;
 }
 .search-input:focus-visible {
   outline: 2px solid var(--accent-strong);
-  outline-offset: 1px;
+  outline-offset: 2px;
+  background: #ffffff;
 }
 
 /* A fixed-height table that scrolls inside itself, header row pinned. */
@@ -1265,5 +1270,192 @@ table.contact-table td.no-truncate {
   }
   .masthead-links {
     justify-content: flex-start;
+  }
+}
+
+/* ============ CONTACT TABLE COLUMN WIDTHS ============
+   The widths used to be inline styles on each <col>. They are classes now so a
+   media query can re-proportion them once two columns drop away on a phone. */
+.cw-category { width: 19%; }
+.cw-contenttype { width: 12%; }
+.cw-name { width: 17%; }
+.cw-role { width: 22%; }
+.cw-region { width: 12%; }
+.cw-org { width: 18%; }
+
+/* Category shows one value per line rather than a long comma-separated run,
+   on every screen size. This is the one cell allowed to be more than one line
+   tall, so it opts out of the table's nowrap and ellipsis. */
+table.contact-table td.cat-cell {
+  white-space: normal;
+  text-overflow: clip;
+  vertical-align: top;
+}
+.cat-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.cat-line {
+  display: block;
+  line-height: 1.35;
+  /* break-word, not anywhere: a long word only splits when it genuinely
+     cannot fit, so "Conservation" stays whole instead of becoming
+     "Conservati / on". */
+  overflow-wrap: break-word;
+}
+
+/* ============ PHONE LAYOUT ============ */
+@media (max-width: 700px) {
+  /* Content Type and Role leave the contact tables, so Category, Name, Region
+     and Org/ Publication get the whole width between them. Everything hidden
+     is still one tap away in the detail popup. */
+  .col-hide-narrow {
+    display: none;
+  }
+  .cw-category { width: 28%; }
+  .cw-name { width: 26%; }
+  .cw-region { width: 20%; }
+  .cw-org { width: 26%; }
+
+  /* On a phone the rows are already tall because Category stacks, so let every
+     cell wrap at spaces rather than truncate. Truncating here cost more than
+     it saved: names came out as "Conta..." and regions as "Hon...". */
+  table.contact-table td {
+    white-space: normal;
+    overflow-wrap: break-word;
+    word-break: normal;
+    /* A word wider than its own column still has to break somewhere. With
+       hyphenation the break reads as a wrapped word, "Conserva-/tion", rather
+       than looking like a typo, "Conservatio/n". */
+    hyphens: auto;
+    font-size: 11.5px;
+    vertical-align: top;
+    /* Tighter side padding buys each column about six more pixels of text,
+       which is the difference between "Conservation" fitting and snapping. */
+    padding-left: 5px;
+    padding-right: 5px;
+  }
+  table.contact-table th {
+    padding-left: 5px;
+    padding-right: 5px;
+  }
+
+  /* The two columns that carry the longest single words. A point smaller is
+     invisible next to the other columns and keeps whole words on one line. */
+  table.contact-table td.cat-cell,
+  table.contact-table td:last-child {
+    font-size: 10.5px;
+  }
+
+  /* The panel's own padding was taking 44px off a 390px screen, more than any
+     column had to spare. Half that on a phone and every column gains. */
+  .panel {
+    padding: 16px 12px 14px;
+  }
+
+  /* Headers are uppercase with letter-spacing, which in a narrow column was
+     snapping words in half: CATEGOR / Y, PUBLICA / TION. Smaller text, no
+     letter-spacing and no mid-word breaking, so they wrap at spaces or not
+     at all. */
+  table.contact-table th {
+    font-size: 10px;
+    letter-spacing: 0;
+    word-break: normal;
+    overflow-wrap: normal;
+    hyphens: none;
+  }
+  .col-head-label {
+    overflow-wrap: normal;
+    word-break: normal;
+  }
+}
+
+@media (max-width: 560px) {
+  .page {
+    padding: 0 16px 56px;
+  }
+
+  /* The masthead stacks: identity on the left, the two pills as icon-only
+     circles on the right, with the date underneath them. */
+  .masthead-top {
+    flex-wrap: nowrap;
+    align-items: flex-start;
+    gap: 12px;
+  }
+  .masthead-right {
+    width: auto;
+    align-items: flex-end;
+    flex: none;
+  }
+  .masthead-links {
+    flex-wrap: nowrap;
+    gap: 8px;
+  }
+  .masthead-button {
+    width: 40px;
+    height: 40px;
+    padding: 0;
+    justify-content: center;
+    gap: 0;
+    border-radius: 50%;
+  }
+  /* The label is kept in the DOM for screen readers and long-press, just not
+     drawn, so the button is a plain icon in a circle. */
+  .masthead-button .masthead-button-label {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+  }
+  .masthead-meta {
+    text-align: right;
+    font-size: 11.5px;
+  }
+  .film-title {
+    font-size: clamp(26px, 8vw, 34px);
+  }
+
+  /* Five nav pills fit two lines at phone width once the padding tightens. */
+  nav.tabs {
+    gap: 6px;
+  }
+  nav.tabs a {
+    font-size: 12.5px;
+    padding: 7px 11px;
+  }
+
+  /* Same for the six channel tabs, which are wider because two carry Chinese
+     subtitles. Two lines, not three. */
+  .tab-nav {
+    gap: 2px;
+  }
+  .tab-btn {
+    font-size: 12px;
+    padding: 8px 8px 10px;
+    gap: 5px;
+  }
+  .tab-btn .cn {
+    font-size: 10px;
+  }
+
+  /* Festivals keeps its four boxes in a 2x2 square rather than a tall stack. */
+  .stat-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .stat-value {
+    font-size: 24px;
+  }
+
+  /* Home's two small tables scroll inside their own panel rather than pushing
+     the page wider than the screen. */
+  .table-wrap {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
   }
 }

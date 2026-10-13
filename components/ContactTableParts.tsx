@@ -81,6 +81,17 @@ export const CONTACT_COLUMNS = [
 ] as const;
 
 /**
+ * Content Type and Role drop away on a phone, leaving Category, Name, Region
+ * and Org/ Publication. Headers, cells and colgroup entries all carry this
+ * class so they disappear together and the remaining widths still add up.
+ */
+export const NARROW_HIDDEN_COLUMNS: readonly string[] = ["Content Type", "Role"];
+
+export function colClass(label: string): string | undefined {
+  return NARROW_HIDDEN_COLUMNS.includes(label) ? "col-hide-narrow" : undefined;
+}
+
+/**
  * Proportional widths, totalling 100 percent, so the content never decides how
  * wide a column is. Paired with table-layout: fixed in globals.css this is what
  * keeps the table inside its panel with no sideways scrolling.
@@ -88,33 +99,51 @@ export const CONTACT_COLUMNS = [
 export function ContactColGroup() {
   return (
     <colgroup>
-      <col style={{ width: "19%" }} />
-      <col style={{ width: "12%" }} />
-      <col style={{ width: "17%" }} />
-      <col style={{ width: "22%" }} />
-      <col style={{ width: "12%" }} />
-      <col style={{ width: "18%" }} />
+      <col className="cw-category" />
+      <col className="cw-contenttype col-hide-narrow" />
+      <col className="cw-name" />
+      <col className="cw-role col-hide-narrow" />
+      <col className="cw-region" />
+      <col className="cw-org" />
     </colgroup>
   );
 }
 
-/** The six cells of one row. Truncation is handled in CSS. */
+/**
+ * The six cells of one row. Truncation is handled in CSS, except in the
+ * Category cell, where each value gets its own line on every screen size
+ * rather than being joined into one long comma-separated string.
+ *
+ * `col-hide-narrow` marks the two columns that drop away on a phone, leaving
+ * Category, Name, Region and Org/ Publication. Everything hidden is still in
+ * the detail popup a tap away.
+ */
 export function ContactRowCells({ record, star }: { record: ContactRecord; star?: boolean }) {
-  const categoryLine = record.categories.filter(Boolean).join(", ");
+  const cats = record.categories.filter(Boolean);
   return (
     <>
-      <td title={categoryLine || undefined}>
+      <td className="cat-cell" title={cats.join(", ") || undefined}>
         {star && (
           <span className="top-star" title="Also on the Top Contacts tab, a priority contact">
             <span aria-hidden="true">{"★"}</span>
             <span className="sr-only">Also on the Top Contacts tab</span>
           </span>
         )}
-        <span className="cell-secondary">{categoryLine || "-"}</span>
+        {cats.length === 0 ? (
+          <span className="cell-secondary">-</span>
+        ) : (
+          <span className="cat-stack">
+            {cats.map((c) => (
+              <span className="cat-line cell-secondary" key={c}>
+                {c}
+              </span>
+            ))}
+          </span>
+        )}
       </td>
-      <td className="cell-secondary">{record.contentType || "-"}</td>
+      <td className="cell-secondary col-hide-narrow">{record.contentType || "-"}</td>
       <td className="cell-strong">{record.name || "-"}</td>
-      <td className="cell-secondary">{record.role || "-"}</td>
+      <td className="cell-secondary col-hide-narrow">{record.role || "-"}</td>
       <td className="cell-secondary">{record.region || "-"}</td>
       <td className="cell-secondary">{record.org || "-"}</td>
     </>

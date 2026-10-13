@@ -4,6 +4,7 @@ import { useState } from "react";
 import type { TopContactSection } from "@/lib/sheets";
 import {
   CONTACT_COLUMNS,
+  colClass,
   ContactColGroup,
   ContactDetailModal,
   ContactRowCells,
@@ -62,7 +63,9 @@ export default function TopContactsSections({ sections }: { sections: TopContact
                   <thead>
                     <tr>
                       {CONTACT_COLUMNS.map((label) => (
-                        <th key={label}>{label}</th>
+                        <th key={label} className={colClass(label)}>
+                          {label}
+                        </th>
                       ))}
                     </tr>
                   </thead>

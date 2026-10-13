@@ -15,9 +15,18 @@ export default function MastheadLinkButton({
   icon: React.ReactNode;
 }) {
   return (
-    <a className="masthead-button" href={href} target="_blank" rel="noopener">
+    <a
+      className="masthead-button"
+      href={href}
+      target="_blank"
+      rel="noopener"
+      // On a phone the pill shrinks to an icon in a circle and the label is
+      // visually hidden, so the title and aria-label carry it instead.
+      title={label}
+      aria-label={label}
+    >
       {icon}
-      {label}
+      <span className="masthead-button-label">{label}</span>
     </a>
   );
 }

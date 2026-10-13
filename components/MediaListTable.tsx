@@ -7,6 +7,7 @@ import {
   ContactColGroup,
   ContactDetailModal,
   ContactRowCells,
+  colClass,
   fromMediaListContact,
   rowKeyDown,
   type ContactRecord,
@@ -308,7 +309,7 @@ export default function MediaListTable({
           <thead>
             <tr>
               {COLUMNS.map((col) => (
-                <th key={col.key}>
+                <th key={col.key} className={colClass(col.label)}>
                   {col.mode === "sort" ? (
                     <button
                       type="button"
