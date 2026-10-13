@@ -27,10 +27,13 @@ type ColumnKey =
 type SortKey = "name" | "email";
 
 /**
- * The eight columns, in the order and with the headings shared with the Top
- * Contacts table. Name and Email sort alphabetically, every other column
- * filters to one of the values present in the sheet. Labels come from
- * ContactTableParts so the two tables cannot drift apart.
+ * The six columns, in the order and with the headings shared with the Top
+ * Contacts table. Name sorts alphabetically, every other column filters to one
+ * of the values present in the sheet. Labels come from ContactTableParts so the
+ * two tables cannot drift apart.
+ *
+ * Email and Recent Work are no longer columns, but the search box still looks
+ * at both, and both appear in the detail popup.
  */
 const COLUMNS: { key: ColumnKey; label: string; mode: "filter" | "sort" }[] = [
   { key: "categories", label: CONTACT_COLUMNS[0], mode: "filter" },
@@ -39,8 +42,6 @@ const COLUMNS: { key: ColumnKey; label: string; mode: "filter" | "sort" }[] = [
   { key: "role", label: CONTACT_COLUMNS[3], mode: "filter" },
   { key: "region", label: CONTACT_COLUMNS[4], mode: "filter" },
   { key: "organization", label: CONTACT_COLUMNS[5], mode: "filter" },
-  { key: "email", label: CONTACT_COLUMNS[6], mode: "sort" },
-  { key: "recentWork", label: CONTACT_COLUMNS[7], mode: "filter" },
 ];
 
 /** Every value a row holds for one column. Category has up to three. */
@@ -105,9 +106,10 @@ export default function MediaListTable({
   const menuRef = useRef<HTMLDivElement | null>(null);
 
   // The filter menu is positioned in viewport coordinates so it is never
-  // clipped by the table's own scrolling box. Those coordinates go stale the
-  // moment anything scrolls or the window resizes, so the menu closes instead
-  // of drifting away from its caret.
+  // clipped by the table's own scrolling box. Those coordinates go stale when
+  // something scrolls, so the menu follows its caret rather than closing. It
+  // used to close on any scroll, which made a long list impossible to scroll
+  // through: the first wheel turn dismissed it.
   useEffect(() => {
     if (!menu) return;
 
@@ -122,21 +124,39 @@ export default function MediaListTable({
     function onKeyDown(e: KeyboardEvent) {
       if (e.key === "Escape") setMenu(null);
     }
-    function onMove() {
-      setMenu(null);
+    function reposition(e: Event) {
+      // Scrolling inside the menu itself must not move or close it.
+      const target = e.target as Node | null;
+      if (target && menuRef.current?.contains(target)) return;
+
+      const caret = document.querySelector<HTMLElement>(
+        `.col-caret[data-col="${menu!.key}"]`
+      );
+      if (!caret) return;
+      const rect = caret.getBoundingClientRect();
+      // Once the caret has scrolled out of the viewport there is nothing left
+      // to anchor to, so close rather than leave the menu floating.
+      if (rect.bottom < 0 || rect.top > window.innerHeight) {
+        setMenu(null);
+        return;
+      }
+      setMenu((m) => (m ? { ...m, left: rect.left, top: rect.bottom + 4 } : m));
     }
 
     document.addEventListener("mousedown", onPointerDown);
     document.addEventListener("keydown", onKeyDown);
-    window.addEventListener("scroll", onMove, true);
-    window.addEventListener("resize", onMove);
+    window.addEventListener("scroll", reposition, true);
+    window.addEventListener("resize", reposition);
     return () => {
       document.removeEventListener("mousedown", onPointerDown);
       document.removeEventListener("keydown", onKeyDown);
-      window.removeEventListener("scroll", onMove, true);
-      window.removeEventListener("resize", onMove);
+      window.removeEventListener("scroll", reposition, true);
+      window.removeEventListener("resize", reposition);
     };
-  }, [menu]);
+    // menu.key is what the effect actually depends on; re-running on every
+    // x/y change would tear the listeners down mid-scroll.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [menu?.key]);
 
   const starred = useMemo(() => {
     const keys = new Set<string>();
@@ -309,6 +329,7 @@ export default function MediaListTable({
                       <button
                         type="button"
                         className={`col-caret${filters[col.key] ? " is-active" : ""}`}
+                        data-col={col.key}
                         onClick={(e) => toggleMenu(e, col.key, col.label)}
                         aria-haspopup="menu"
                         aria-expanded={menu?.key === col.key}

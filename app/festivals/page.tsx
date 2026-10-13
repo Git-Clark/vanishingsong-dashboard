@@ -48,16 +48,6 @@ export default async function FestivalsPage() {
         </div>
       </section>
 
-      <div className="oscar-note">
-        <span>🏆</span>
-        <div>
-          <strong>Oscar Qualifying column is unconfirmed.</strong> I haven&rsquo;t marked any festival
-          as an Academy-qualifying run. That needs to be checked against the current Academy rules
-          for this film&rsquo;s category before it&rsquo;s trusted for campaign strategy. Ask me to
-          research it, or fill it in directly on the sheet.
-        </div>
-      </div>
-
       <FestivalsTable festivals={festivals} />
 
       <Footer />

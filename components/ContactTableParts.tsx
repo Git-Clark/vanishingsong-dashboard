@@ -68,6 +68,9 @@ export function fromTopContact(c: TopContact): ContactRecord {
 }
 
 /** The eight columns, in the order the owner asked for, both tables. */
+// Email and Recent Work were dropped from the table at the owner's request.
+// Both still appear in the detail popup, so nothing is lost, and the six
+// remaining columns each get more room.
 export const CONTACT_COLUMNS = [
   "Category",
   "Content Type",
@@ -75,8 +78,6 @@ export const CONTACT_COLUMNS = [
   "Role",
   "Region",
   "Org/ Publication",
-  "Email",
-  "Recent Work",
 ] as const;
 
 /**
@@ -87,19 +88,17 @@ export const CONTACT_COLUMNS = [
 export function ContactColGroup() {
   return (
     <colgroup>
+      <col style={{ width: "19%" }} />
       <col style={{ width: "12%" }} />
-      <col style={{ width: "10%" }} />
-      <col style={{ width: "14%" }} />
-      <col style={{ width: "15%" }} />
-      <col style={{ width: "9%" }} />
-      <col style={{ width: "14%" }} />
-      <col style={{ width: "14%" }} />
+      <col style={{ width: "17%" }} />
+      <col style={{ width: "22%" }} />
       <col style={{ width: "12%" }} />
+      <col style={{ width: "18%" }} />
     </colgroup>
   );
 }
 
-/** The eight cells of one row. Truncation is handled in CSS. */
+/** The six cells of one row. Truncation is handled in CSS. */
 export function ContactRowCells({ record, star }: { record: ContactRecord; star?: boolean }) {
   const categoryLine = record.categories.filter(Boolean).join(", ");
   return (
@@ -118,8 +117,6 @@ export function ContactRowCells({ record, star }: { record: ContactRecord; star?
       <td className="cell-secondary">{record.role || "-"}</td>
       <td className="cell-secondary">{record.region || "-"}</td>
       <td className="cell-secondary">{record.org || "-"}</td>
-      <td className="cell-secondary">{record.email || "-"}</td>
-      <td className="cell-secondary">{record.recentWork || "-"}</td>
     </>
   );
 }

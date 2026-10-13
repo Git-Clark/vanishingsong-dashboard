@@ -80,7 +80,6 @@ export default function FestivalsTable({ festivals }: { festivals: Festival[] })
                 <th>Notifies</th>
                 <th>Event Date</th>
                 <th>Status</th>
-                <th>Oscar Qualifying</th>
               </tr>
             </thead>
             <tbody>
@@ -100,9 +99,6 @@ export default function FestivalsTable({ festivals }: { festivals: Festival[] })
                   <td className="date-cell num">{formatShort(f.eventIso)}</td>
                   <td>
                     <span className={`status-chip ${statusClass(f.status)}`}>{f.status}</span>
-                  </td>
-                  <td>
-                    <span className="status-chip neutral">Unconfirmed</span>
                   </td>
                 </tr>
               ))}

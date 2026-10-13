@@ -16,11 +16,9 @@ const STATUS_CLASS: Record<string, string> = {
 // the Media Contacts sheet doesn't have Content Type / Status columns yet
 // (see the panel caption), so we cycle a small placeholder pattern over
 // whichever contacts come back from getContacts().
-const OUTREACH_PATTERN: { label: string; cls: string }[] = [
-  { label: "Responded", cls: "good" },
-  { label: "Contacted", cls: "pending" },
-  { label: "Not Contacted", cls: "neutral" },
-];
+// Outreach has not started, so every contact reads Not Contacted. When the
+// Media Contacts sheet grows a real status column, read it here instead.
+const OUTREACH_STATUS = { label: "Not Contacted", cls: "neutral" };
 
 export default async function HomePage() {
   const [festivals, mediaContacts, socialPosts, priorities] = await Promise.all([
@@ -195,19 +193,18 @@ export default async function HomePage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {flatContacts.map((c, i) => {
-                    const outreach = OUTREACH_PATTERN[i % OUTREACH_PATTERN.length];
-                    return (
-                      <tr key={c.email || i}>
-                        <td className="cell-strong">{c.organization}</td>
-                        <td className="cell-secondary">{c.name}</td>
-                        <td className="cell-secondary">{c.contentType || "-"}</td>
-                        <td>
-                          <span className={`status-chip ${outreach.cls}`}>{outreach.label}</span>
-                        </td>
-                      </tr>
-                    );
-                  })}
+                  {flatContacts.map((c, i) => (
+                    <tr key={c.email || i}>
+                      <td className="cell-strong">{c.organization}</td>
+                      <td className="cell-secondary">{c.name}</td>
+                      <td className="cell-secondary">{c.contentType || "-"}</td>
+                      <td>
+                        <span className={`status-chip ${OUTREACH_STATUS.cls}`}>
+                          {OUTREACH_STATUS.label}
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
                 </tbody>
               </table>
             </div>
