@@ -1,11 +1,12 @@
 // Server-side Google Sheets data layer.
 //
-// Four spreadsheets are read through one service-account JWT client:
+// Five spreadsheets are read through one service-account JWT client:
 //
 //   FESTIVALS_SHEET_ID   festival submissions, one tab
 //   SOCIAL_SHEET_ID      social campaign, tabs "Upcoming" and "Completed"
 //   CONTACTS_SHEET_ID    tabs "Media List", "Top Contacts" and "Contacted"
 //   SCREENINGS_SHEET_ID  tabs "Upcoming/ Possible" and "Completed"
+//   PRIORITIES_SHEET_ID  this week's priorities, one tab "Sheet1", one column
 //
 // NOTE ON FIRST RUN: the two newer spreadsheets, Contacts and Screenings, may
 // not be shared with the service account yet, and several tabs are still empty
@@ -51,6 +52,10 @@
 // SCREENINGS_SHEET_ID, tab "Completed" (A:G):
 //   Date | Location | Theater/ Organization | Size | Contact Person |
 //   Contact Info | Notes
+//
+// PRIORITIES_SHEET_ID, tab "Sheet1" (A:A):
+//   one column only. Row 1 is the sheet's own title, "This Week's
+//   Priorities", and every row below it is one priority.
 
 import { google } from "googleapis";
 import {
@@ -497,4 +502,20 @@ export async function getCompletedScreenings(): Promise<CompletedScreening[]> {
         notes: cell(r, 6),
       };
     });
+}
+
+/* ============ PRIORITIES ============ */
+
+/**
+ * This week's priorities, from their own one-column spreadsheet.
+ *
+ * The tab is the default "Sheet1" and row 1 holds the sheet's own title, so
+ * the read starts at A2. Every non-empty cell below it is one priority, in
+ * the order the owner typed them. An unshared sheet or a missing
+ * PRIORITIES_SHEET_ID comes back as an empty list, same as everywhere else,
+ * and Home shows an empty state rather than failing.
+ */
+export async function getPriorities(): Promise<string[]> {
+  const rows = await safeRows("getPriorities", process.env.PRIORITIES_SHEET_ID, "Sheet1!A2:A");
+  return rows.map((r) => cell(r, 0)).filter(Boolean);
 }

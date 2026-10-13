@@ -41,6 +41,8 @@ This lets the site read your three sheets automatically. It takes about 10 minut
 | `FESTIVALS_SHEET_ID` | The ID from the Festival Submission Schedule sheet |
 | `CONTACTS_SHEET_ID` | The ID from the Contact list sheet |
 | `SOCIAL_SHEET_ID` | The ID from the Social Media Schedule sheet |
+| `SCREENINGS_SHEET_ID` | The ID from the Screenings sheet |
+| `PRIORITIES_SHEET_ID` | The ID from the This Week's Priorities sheet |
 
 4. Click "Deploy." Vercel builds and gives you a live link when it's done.
 

@@ -1,40 +1,46 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { MediaListContact } from "@/lib/sheets";
+import {
+  CONTACT_COLUMNS,
+  ContactColGroup,
+  ContactDetailModal,
+  ContactRowCells,
+  fromMediaListContact,
+  rowKeyDown,
+  type ContactRecord,
+} from "./ContactTableParts";
 
 const PAGE_SIZE = 25;
 
 type ColumnKey =
   | "categories"
+  | "contentType"
   | "name"
   | "role"
+  | "region"
   | "organization"
   | "email"
-  | "socialOrContactPage"
-  | "region"
-  | "contentType"
-  | "recentWork"
-  | "notes";
+  | "recentWork";
 
 type SortKey = "name" | "email";
 
 /**
- * Column order follows the Media List tab, with the three Category columns
- * collapsed into the first cell. Name and Email sort alphabetically, every
- * other column filters to one of the values present in the sheet.
+ * The eight columns, in the order and with the headings shared with the Top
+ * Contacts table. Name and Email sort alphabetically, every other column
+ * filters to one of the values present in the sheet. Labels come from
+ * ContactTableParts so the two tables cannot drift apart.
  */
 const COLUMNS: { key: ColumnKey; label: string; mode: "filter" | "sort" }[] = [
-  { key: "categories", label: "Category", mode: "filter" },
-  { key: "name", label: "Name", mode: "sort" },
-  { key: "role", label: "Role", mode: "filter" },
-  { key: "organization", label: "Organization / Publication", mode: "filter" },
-  { key: "email", label: "Email", mode: "sort" },
-  { key: "socialOrContactPage", label: "Social or Contact Page", mode: "filter" },
-  { key: "region", label: "Region", mode: "filter" },
-  { key: "contentType", label: "Content Type", mode: "filter" },
-  { key: "recentWork", label: "Recent Relevant Work", mode: "filter" },
-  { key: "notes", label: "Notes", mode: "filter" },
+  { key: "categories", label: CONTACT_COLUMNS[0], mode: "filter" },
+  { key: "contentType", label: CONTACT_COLUMNS[1], mode: "filter" },
+  { key: "name", label: CONTACT_COLUMNS[2], mode: "sort" },
+  { key: "role", label: CONTACT_COLUMNS[3], mode: "filter" },
+  { key: "region", label: CONTACT_COLUMNS[4], mode: "filter" },
+  { key: "organization", label: CONTACT_COLUMNS[5], mode: "filter" },
+  { key: "email", label: CONTACT_COLUMNS[6], mode: "sort" },
+  { key: "recentWork", label: CONTACT_COLUMNS[7], mode: "filter" },
 ];
 
 /** Every value a row holds for one column. Category has up to three. */
@@ -79,6 +85,9 @@ function shorten(value: string, max = 48): string {
   return value.length > max ? `${value.slice(0, max - 1)}…` : value;
 }
 
+/** Where an open filter menu sits on screen, in viewport coordinates. */
+type MenuState = { key: ColumnKey; label: string; left: number; top: number };
+
 export default function MediaListTable({
   contacts,
   topContactNames,
@@ -91,6 +100,43 @@ export default function MediaListTable({
   const [filters, setFilters] = useState<Partial<Record<ColumnKey, string>>>({});
   const [sort, setSort] = useState<{ key: SortKey; dir: "asc" | "desc" } | null>(null);
   const [page, setPage] = useState(1);
+  const [menu, setMenu] = useState<MenuState | null>(null);
+  const [openRecord, setOpenRecord] = useState<ContactRecord | null>(null);
+  const menuRef = useRef<HTMLDivElement | null>(null);
+
+  // The filter menu is positioned in viewport coordinates so it is never
+  // clipped by the table's own scrolling box. Those coordinates go stale the
+  // moment anything scrolls or the window resizes, so the menu closes instead
+  // of drifting away from its caret.
+  useEffect(() => {
+    if (!menu) return;
+
+    function onPointerDown(e: MouseEvent) {
+      const target = e.target as Element | null;
+      if (!target) return;
+      if (menuRef.current?.contains(target)) return;
+      // The caret handles its own toggle, so leave its clicks alone.
+      if (target.closest(".col-caret")) return;
+      setMenu(null);
+    }
+    function onKeyDown(e: KeyboardEvent) {
+      if (e.key === "Escape") setMenu(null);
+    }
+    function onMove() {
+      setMenu(null);
+    }
+
+    document.addEventListener("mousedown", onPointerDown);
+    document.addEventListener("keydown", onKeyDown);
+    window.addEventListener("scroll", onMove, true);
+    window.addEventListener("resize", onMove);
+    return () => {
+      document.removeEventListener("mousedown", onPointerDown);
+      document.removeEventListener("keydown", onKeyDown);
+      window.removeEventListener("scroll", onMove, true);
+      window.removeEventListener("resize", onMove);
+    };
+  }, [menu]);
 
   const starred = useMemo(() => {
     const keys = new Set<string>();
@@ -102,7 +148,7 @@ export default function MediaListTable({
   }, [topContactNames]);
 
   // Distinct values come from the whole sheet, not from the current view, so
-  // the dropdowns stay stable while filters are applied.
+  // the menus stay stable while filters are applied.
   const options = useMemo(() => {
     const map = new Map<ColumnKey, string[]>();
     for (const col of COLUMNS) {
@@ -152,6 +198,7 @@ export default function MediaListTable({
   function setFilter(key: ColumnKey, value: string) {
     setFilters((prev) => ({ ...prev, [key]: value }));
     setPage(1);
+    setMenu(null);
   }
 
   function toggleSort(key: SortKey) {
@@ -168,6 +215,24 @@ export default function MediaListTable({
     setFilters({});
     setSort(null);
     setPage(1);
+    setMenu(null);
+  }
+
+  function toggleMenu(e: React.MouseEvent<HTMLButtonElement>, key: ColumnKey, label: string) {
+    // A header control must never be mistaken for a click on a row.
+    e.stopPropagation();
+    if (menu?.key === key) {
+      setMenu(null);
+      return;
+    }
+    const rect = e.currentTarget.getBoundingClientRect();
+    const MENU_WIDTH = 260;
+    setMenu({
+      key,
+      label,
+      left: Math.min(rect.left, Math.max(8, window.innerWidth - MENU_WIDTH - 8)),
+      top: rect.bottom + 6,
+    });
   }
 
   if (contacts.length === 0) {
@@ -213,12 +278,13 @@ export default function MediaListTable({
         </div>
       </div>
       <p className="panel-caption">
-        {visible.length} of {contacts.length} contact{contacts.length === 1 ? "" : "s"} shown. A star
-        marks a contact who is also on the Top Contacts tab.
+        {visible.length} of {contacts.length} contact{contacts.length === 1 ? "" : "s"} shown. Click
+        any row to see the full record. A star marks a contact who is also on the Top Contacts tab.
       </p>
 
-      <div className="table-scroll">
-        <table className="full-table sticky-head">
+      <div className="table-scroll contact-scroll">
+        <table className="contact-table">
+          <ContactColGroup />
           <thead>
             <tr>
               {COLUMNS.map((col) => (
@@ -236,21 +302,24 @@ export default function MediaListTable({
                       </span>
                     </button>
                   ) : (
-                    <div className="col-filter-wrap">
-                      <span>{col.label}</span>
-                      <select
-                        className="col-filter"
-                        value={filters[col.key] ?? ""}
-                        onChange={(e) => setFilter(col.key, e.target.value)}
-                        aria-label={`Filter by ${col.label}`}
+                    <div className="col-head">
+                      <span className="col-head-label" title={col.label}>
+                        {col.label}
+                      </span>
+                      <button
+                        type="button"
+                        className={`col-caret${filters[col.key] ? " is-active" : ""}`}
+                        onClick={(e) => toggleMenu(e, col.key, col.label)}
+                        aria-haspopup="menu"
+                        aria-expanded={menu?.key === col.key}
+                        aria-label={
+                          filters[col.key]
+                            ? `Filter by ${col.label}, currently ${filters[col.key]}`
+                            : `Filter by ${col.label}`
+                        }
                       >
-                        <option value="">All</option>
-                        {(options.get(col.key) ?? []).map((v) => (
-                          <option key={v} value={v}>
-                            {shorten(v)}
-                          </option>
-                        ))}
-                      </select>
+                        <span aria-hidden="true">▾</span>
+                      </button>
                     </div>
                   )}
                 </th>
@@ -258,41 +327,25 @@ export default function MediaListTable({
             </tr>
           </thead>
           <tbody>
-            {pageRows.map((c, i) => (
-              <tr key={`${c.email || c.name}-${i}`}>
-                <td>
-                  <div className="cat-stack">
-                    {c.categories.length === 0 && <span className="cat-line">-</span>}
-                    {c.categories.map((cat) => (
-                      <span className="cat-line" key={cat}>
-                        {cat}
-                      </span>
-                    ))}
-                    {starred.has(nameKey(c.name)) && (
-                      <span
-                        className="top-star"
-                        title="Also on the Top Contacts tab, a priority contact"
-                      >
-                        <span aria-hidden="true">{"★"}</span>
-                        <span className="sr-only">Also on the Top Contacts tab</span>
-                      </span>
-                    )}
-                  </div>
-                </td>
-                <td className="cell-strong">{c.name || "-"}</td>
-                <td className="cell-secondary">{c.role || "-"}</td>
-                <td className="cell-secondary">{c.organization || "-"}</td>
-                <td className="cell-secondary wrap-cell">{c.email || "-"}</td>
-                <td className="cell-secondary wrap-cell">{c.socialOrContactPage || "-"}</td>
-                <td className="cell-secondary">{c.region || "-"}</td>
-                <td className="cell-secondary">{c.contentType || "-"}</td>
-                <td className="cell-secondary wrap-cell">{c.recentWork || "-"}</td>
-                <td className="cell-secondary wrap-cell">{c.notes || "-"}</td>
-              </tr>
-            ))}
+            {pageRows.map((c, i) => {
+              const record = fromMediaListContact(c);
+              const open = () => setOpenRecord(record);
+              return (
+                <tr
+                  key={`${c.email || c.name}-${i}`}
+                  tabIndex={0}
+                  aria-haspopup="dialog"
+                  title="Open the full record"
+                  onClick={open}
+                  onKeyDown={rowKeyDown(open)}
+                >
+                  <ContactRowCells record={record} star={starred.has(nameKey(c.name))} />
+                </tr>
+              );
+            })}
             {pageRows.length === 0 && (
               <tr>
-                <td colSpan={COLUMNS.length} className="cell-secondary">
+                <td colSpan={COLUMNS.length} className="cell-secondary no-truncate">
                   No contacts match the search and filters. Clear them to see the full list again.
                 </td>
               </tr>
@@ -300,6 +353,38 @@ export default function MediaListTable({
           </tbody>
         </table>
       </div>
+
+      {menu && (
+        <div
+          className="col-menu"
+          ref={menuRef}
+          role="menu"
+          aria-label={`Filter by ${menu.label}`}
+          style={{ left: menu.left, top: menu.top }}
+          onClick={(e) => e.stopPropagation()}
+        >
+          <button
+            type="button"
+            role="menuitem"
+            className={`col-menu-item${filters[menu.key] ? "" : " is-chosen"}`}
+            onClick={() => setFilter(menu.key, "")}
+          >
+            All
+          </button>
+          {(options.get(menu.key) ?? []).map((v) => (
+            <button
+              key={v}
+              type="button"
+              role="menuitem"
+              className={`col-menu-item${filters[menu.key] === v ? " is-chosen" : ""}`}
+              title={v}
+              onClick={() => setFilter(menu.key, v)}
+            >
+              {shorten(v)}
+            </button>
+          ))}
+        </div>
+      )}
 
       <div className="pager">
         <button
@@ -322,6 +407,10 @@ export default function MediaListTable({
           Next
         </button>
       </div>
+
+      {openRecord && (
+        <ContactDetailModal record={openRecord} onClose={() => setOpenRecord(null)} />
+      )}
     </div>
   );
 }

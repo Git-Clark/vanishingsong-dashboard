@@ -67,7 +67,7 @@ export default async function ScreeningsPage() {
           <h2>Screenings</h2>
           <div className="page-caption">
             Upcoming and possible screenings outside the festival circuit, read live from the
-            Screenings spreadsheet. Confirmed screenings also appear on the Calendar.
+            Screenings spreadsheet.
           </div>
         </div>
         <TableModalButton

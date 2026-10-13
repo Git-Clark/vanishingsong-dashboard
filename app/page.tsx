@@ -1,8 +1,8 @@
 import Masthead from "@/components/Masthead";
 import Footer from "@/components/Footer";
-import { getFestivals, getMediaList, getSocialPosts } from "@/lib/sheets";
+import { getFestivals, getMediaList, getPriorities, getSocialPosts } from "@/lib/sheets";
 import { CHANNELS } from "@/lib/sampleData";
-import { daysUntil, formatShort, parseIsoDate, todayHK } from "@/lib/dates";
+import { daysUntil, formatShort, todayHK } from "@/lib/dates";
 
 export const revalidate = 300; // 5 min ISR, reflects sheet edits without a redeploy
 
@@ -12,7 +12,7 @@ const STATUS_CLASS: Record<string, string> = {
   Accepted: "good",
 };
 
-// Illustrative-only outreach status pattern for the Media Outreach panel —
+// Illustrative-only outreach status pattern for the Media Outreach panel,
 // the Media Contacts sheet doesn't have Content Type / Status columns yet
 // (see the panel caption), so we cycle a small placeholder pattern over
 // whichever contacts come back from getContacts().
@@ -23,53 +23,20 @@ const OUTREACH_PATTERN: { label: string; cls: string }[] = [
 ];
 
 export default async function HomePage() {
-  const [festivals, mediaContacts, socialPosts] = await Promise.all([
+  const [festivals, mediaContacts, socialPosts, priorities] = await Promise.all([
     getFestivals(),
     getMediaList(),
     getSocialPosts(),
+    getPriorities(),
   ]);
 
   const today = todayHK();
 
-  // ---- Next Notification ----
-  const upcomingNotifies = festivals
-    .filter((f) => f.notifyIso && daysUntil(f.notifyIso, today) >= 0)
-    .sort((a, b) => (a.notifyIso! < b.notifyIso! ? -1 : 1));
-  const nextNotify = upcomingNotifies[0];
-  const nextNotifyDays = nextNotify ? daysUntil(nextNotify.notifyIso!, today) : null;
-
-  // ---- Pending Decisions ----
-  const pendingCount = festivals.filter((f) => f.status === "Pending").length;
-  const decided = festivals.filter((f) => f.status !== "Pending");
-  const pendingSub =
-    decided.length === 0
-      ? "No decisions received yet"
-      : `${decided.length} decision${decided.length === 1 ? "" : "s"} received so far (${decided
-          .map((f) => f.name)
-          .join(", ")})`;
-
-  // ---- Events This Month ----
-  const thisMonthEvents = festivals.filter((f) => {
-    if (!f.eventIso) return false;
-    const dt = parseIsoDate(f.eventIso);
-    return dt.getUTCFullYear() === today.getUTCFullYear() && dt.getUTCMonth() === today.getUTCMonth();
-  });
-  const activeThisMonth = thisMonthEvents.filter((f) => f.status !== "Not accepted");
-  const declinedThisMonth = thisMonthEvents.filter((f) => f.status === "Not accepted");
-  let eventsSub: string;
-  if (activeThisMonth.length === 0) {
-    eventsSub = "No confirmed events on the calendar this month";
-  } else {
-    eventsSub = activeThisMonth.map((f) => `${f.name}, ${formatShort(f.eventIso)}`).join("; ");
-  }
-  if (declinedThisMonth.length) {
-    eventsSub += `. ${declinedThisMonth
-      .map((f) => `${f.name} passed on us ${formatShort(f.eventIso)}`)
-      .join("; ")}`;
-  }
-
   // ---- Upcoming Notifications table (next 5) ----
-  const nextFive = upcomingNotifies.slice(0, 5);
+  const nextFive = festivals
+    .filter((f) => f.notifyIso && daysUntil(f.notifyIso, today) >= 0)
+    .sort((a, b) => (a.notifyIso! < b.notifyIso! ? -1 : 1))
+    .slice(0, 5);
 
   // ---- Upcoming Scheduled Posts ----
   const upcomingPosts = socialPosts
@@ -86,65 +53,38 @@ export default async function HomePage() {
     <div className="page">
       <Masthead variant="home" />
 
-      <section className="stat-grid" aria-label="Key metrics">
-        <div className="stat-card accent">
-          <div className="stat-label">Next Notification</div>
-          <div className="stat-value num">
-            {nextNotify ? (
-              <>
-                {formatShort(nextNotify.notifyIso!)}{" "}
-                <small>
-                  · {nextNotifyDays} day{nextNotifyDays === 1 ? "" : "s"}
-                </small>
-              </>
-            ) : (
-              "-"
-            )}
-          </div>
-          <div className="stat-sub">{nextNotify ? nextNotify.name : "No upcoming notifications on file"}</div>
-        </div>
-        <div className="stat-card">
-          <div className="stat-label">Festivals Tracked</div>
-          <div className="stat-value num">{festivals.length}</div>
-          <div className="stat-sub">Across the full submission schedule</div>
-        </div>
-        <div className="stat-card">
-          <div className="stat-label">Pending Decisions</div>
-          <div className="stat-value num">{pendingCount}</div>
-          <div className="stat-sub">{pendingSub}</div>
-        </div>
-        <div className="stat-card">
-          <div className="stat-label">Events This Month</div>
-          <div className="stat-value num">{activeThisMonth.length}</div>
-          <div className="stat-sub">{eventsSub}</div>
-        </div>
-      </section>
-
       <section className="content-grid">
         <div className="col">
           <div className="panel">
             <div className="panel-head">
               <h2 className="panel-title">This Week&rsquo;s Priorities</h2>
-              <span className="panel-note">Set by the team</span>
+              <span className="panel-note">
+                {priorities.length === 0
+                  ? "Set by the team"
+                  : `${priorities.length} this week`}
+              </span>
             </div>
-            <p className="panel-caption">Manually updated, not pulled from a sheet.</p>
-            <ul className="priority-list">
-              <li>
-                <span className="checkbox"></span> Follow up on New Hampshire Film Festival and IDFA
-                <span className="priority-tag">Notified Sep 1</span>
-              </li>
-              <li>
-                <span className="checkbox"></span> Finish outreach prep for Wildlife Conservation Film
-                Festival ahead of its Sep 7 notification
-              </li>
-              <li>
-                <span className="checkbox"></span> Confirm next steps following Telluride&rsquo;s decision
-              </li>
-              <li>
-                <span className="checkbox"></span> Review Instagram and Facebook launch teaser copy ahead
-                of festival season
-              </li>
-            </ul>
+            <p className="panel-caption">
+              Read live from the This Week&rsquo;s Priorities sheet, in the order they are listed
+              there.
+            </p>
+            {priorities.length === 0 ? (
+              <div className="empty-state">
+                <strong>No priorities listed yet</strong>
+                This panel reads column A of the <code>Sheet1</code> tab of the This Week&rsquo;s
+                Priorities spreadsheet, from row 2 down. Share that spreadsheet with the
+                dashboard&rsquo;s service account and set <code>PRIORITIES_SHEET_ID</code>, and every
+                row will appear here within a few minutes.
+              </div>
+            ) : (
+              <ul className="priority-list">
+                {priorities.map((item, i) => (
+                  <li key={i}>
+                    <span className="checkbox"></span> {item}
+                  </li>
+                ))}
+              </ul>
+            )}
           </div>
 
           <div className="panel">

@@ -3,18 +3,18 @@
 @tailwind utilities;
 
 /* ============================================================
-   The Vanishing Song — Campaign Dashboard
+   The Vanishing Song, Campaign Dashboard
    Design tokens + hand-written styles ported from the approved
    static design drafts (shared.py BASE_CSS). Tailwind is present
    for utility convenience but the visual system below is the
-   source of truth — do not restyle these rules with utilities.
+   source of truth, do not restyle these rules with utilities.
    ============================================================ */
 
 /* ============ TOKENS ============
    Matched to thevanishingsong.com: true near-black ground, white/gray
    editorial hierarchy, the site's own blue for interactive accents.
    The pale hero gold is reserved for the masthead title only, echoing
-   the poster/hero treatment on the real site — it is not the UI accent.
+   the poster/hero treatment on the real site, it is not the UI accent.
    Dark-only by design, see note below.
 */
 :root {
@@ -42,9 +42,6 @@
   --status-critical: #c15b45;
   --status-critical-bg: rgba(193, 91, 69, 0.14);
   --status-neutral: #4a4a4a;
-  /* Confirmed screenings on the calendar, kept clear of the festival blue,
-     the notification orange and the social green. */
-  --status-screening: #a78bfa;
 
   --shadow: 0 1px 0 rgba(0, 0, 0, 0.4);
   color-scheme: dark;
@@ -118,17 +115,6 @@ h3 {
 .masthead-id {
   max-width: 640px;
 }
-.eyebrow {
-  font-size: 11.5px;
-  font-weight: 700;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: var(--text-muted);
-  margin-bottom: 10px;
-}
-.eyebrow .dot {
-  color: var(--status-critical);
-}
 .film-title {
   font-family: "Poppins", "Inter", sans-serif;
   font-size: clamp(26px, 3.2vw, 34px);
@@ -166,7 +152,16 @@ h3 {
   font-weight: 600;
 }
 
-.drive-button {
+/* The Project Drive and Calendar pills, see components/MastheadLinkButton.tsx.
+   They sit side by side and wrap onto a second line on a narrow screen. */
+.masthead-links {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.masthead-button {
   display: inline-flex;
   align-items: center;
   gap: 9px;
@@ -181,10 +176,10 @@ h3 {
   letter-spacing: 0.01em;
   transition: opacity 0.15s ease;
 }
-.drive-button:hover {
+.masthead-button:hover {
   opacity: 0.85;
 }
-.drive-button svg {
+.masthead-button svg {
   flex: none;
   display: block;
 }
@@ -354,19 +349,6 @@ button:focus-visible {
   margin-top: 2px;
   border-radius: 4px;
   border: 1.5px solid var(--text-muted);
-}
-.priority-tag {
-  display: inline-block;
-  margin-left: 8px;
-  font-size: 10.5px;
-  font-weight: 700;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
-  color: var(--status-pending);
-  background: var(--status-pending-bg);
-  padding: 2px 7px;
-  border-radius: 5px;
-  vertical-align: middle;
 }
 
 /* data tables */
@@ -542,7 +524,7 @@ footer.page-footer {
   color: var(--text-muted);
 }
 
-/* ============ FILTER PILLS (shared: festivals, calendar) ============ */
+/* ============ FILTER PILLS (shared: festivals, media contacts) ============ */
 .filter-row {
   display: flex;
   gap: 8px;
@@ -600,136 +582,6 @@ footer.page-footer {
 }
 .oscar-note strong {
   color: var(--text-primary);
-}
-
-/* ============ CALENDAR ============ */
-.cal-legend {
-  display: flex;
-  gap: 18px;
-  flex-wrap: wrap;
-  margin: 2px 0 26px;
-  font-size: 12.5px;
-  color: var(--text-secondary);
-}
-.cal-legend span {
-  display: inline-flex;
-  align-items: center;
-  gap: 7px;
-}
-.cal-legend i {
-  width: 9px;
-  height: 9px;
-  border-radius: 50%;
-  display: inline-block;
-}
-.cal-legend .i-notify {
-  background: var(--status-pending);
-}
-.cal-legend .i-event {
-  background: var(--accent);
-}
-.cal-legend .i-screening {
-  background: var(--status-screening);
-}
-.cal-legend .i-post {
-  background: var(--status-good);
-}
-
-.cal-month {
-  margin-bottom: 30px;
-}
-.cal-month h3 {
-  font-family: "Inter", sans-serif;
-  font-size: 11.5px;
-  font-weight: 800;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: var(--text-muted);
-  padding-bottom: 8px;
-  border-bottom: 1px solid var(--border);
-  margin-bottom: 4px;
-}
-.cal-item {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  padding: 13px 4px;
-  border-bottom: 1px solid var(--border-soft);
-}
-.cal-item:last-child {
-  border-bottom: none;
-}
-.cal-item .cal-date {
-  flex: none;
-  width: 64px;
-  font-family: "Inter", sans-serif;
-  font-weight: 700;
-  font-size: 13.5px;
-  color: var(--text-primary);
-}
-.cal-item.is-past .cal-date {
-  color: var(--text-muted);
-}
-.cal-item .cal-dot {
-  flex: none;
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-}
-.cal-dot.notify {
-  background: var(--status-pending);
-}
-.cal-dot.event {
-  background: var(--accent);
-}
-.cal-dot.screening {
-  background: var(--status-screening);
-}
-.cal-dot.post {
-  background: var(--status-good);
-}
-.cal-item .cal-body {
-  flex: 1 1 auto;
-  min-width: 0;
-}
-.cal-item .cal-title {
-  font-weight: 600;
-  font-size: 14px;
-  color: var(--text-primary);
-}
-.cal-item.is-past .cal-title {
-  color: var(--text-secondary);
-}
-.cal-item .cal-meta {
-  font-size: 12px;
-  color: var(--text-muted);
-  margin-top: 2px;
-}
-.cal-item .cal-status {
-  flex: none;
-}
-.cal-item[hidden] {
-  display: none;
-}
-
-.cal-today {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin: 26px 0;
-  color: var(--accent-strong);
-  font-size: 11.5px;
-  font-weight: 800;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-}
-.cal-today::before,
-.cal-today::after {
-  content: "";
-  flex: 1;
-  height: 1px;
-  background: var(--accent);
-  opacity: 0.4;
 }
 
 /* ============ TABS (promo campaign) ============ */
@@ -973,6 +825,19 @@ footer.page-footer {
   .post-columns {
     display: none;
   }
+  /* Narrow screens keep the same proportional columns but let the text wrap
+     instead of truncating, so the cells grow taller rather than the table
+     growing wider. Still no sideways scrolling. */
+  table.contact-table {
+    font-size: 12px;
+  }
+  table.contact-table td {
+    white-space: normal;
+    word-break: break-word;
+  }
+  .detail-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 @media (max-width: 560px) {
   .stat-grid {
@@ -1171,42 +1036,185 @@ footer.page-footer {
   border: 1px solid var(--border-soft);
   border-radius: 4px;
 }
-table.sticky-head {
-  min-width: 1080px;
+/* The Media List table scrolls vertically inside this box with its heading row
+   pinned, and hides any sideways overflow, so a stray long value can never
+   reintroduce a horizontal scrollbar. Top Contacts has no such box, it simply
+   runs down the page. */
+.contact-scroll {
+  overflow-x: hidden;
 }
-table.sticky-head thead th {
+.contact-scroll table.contact-table th {
   position: sticky;
   top: 0;
   z-index: 2;
+}
+
+/* ============ CONTACT TABLES (Media List, Top Contacts) ============
+   Both tables use the same eight columns, the same proportional widths from
+   components/ContactTableParts.tsx, and the same clickable rows.
+
+   table-layout: fixed is the whole trick behind "no sideways scrolling": the
+   colgroup percentages decide the widths, the content does not, and anything
+   too long for its cell is cut off with an ellipsis on one line. The full text
+   is always one click away in the row's detail popup. */
+table.contact-table {
+  width: 100%;
+  table-layout: fixed;
+  border-collapse: collapse;
+  font-size: 13.5px;
+}
+table.contact-table th {
+  text-align: left;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-muted);
   background: var(--surface);
-  padding: 10px 10px 10px 8px;
+  border-bottom: 1px solid var(--border);
+  padding: 10px 8px;
   vertical-align: bottom;
 }
-table.sticky-head td {
-  padding: 11px 10px 11px 8px;
+table.contact-table td {
+  padding: 11px 8px;
+  border-bottom: 1px solid var(--border-soft);
+  vertical-align: middle;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
 }
-.col-filter-wrap {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-.col-filter {
-  font-family: inherit;
-  font-size: 11.5px;
-  font-weight: 600;
-  letter-spacing: 0;
-  text-transform: none;
-  max-width: 160px;
-  color: var(--text-secondary);
-  background: var(--bg-rise);
-  border: 1px solid var(--border);
-  border-radius: 4px;
-  padding: 5px 6px;
+/* Two subtly different dark tones rather than literal light and dark grey,
+   which would be unreadable on this near-black ground. Odd rows are the panel
+   itself, even rows sit one step up. */
+table.contact-table tbody tr {
   cursor: pointer;
 }
-.col-filter:hover {
-  border-color: var(--accent);
+table.contact-table tbody tr:nth-child(even) {
+  background: var(--surface-raised);
 }
+/* Kept clearly apart from both row tones by being tinted, not just lighter. */
+table.contact-table tbody tr:hover {
+  background: var(--accent-wash);
+}
+table.contact-table tbody tr:focus-visible {
+  outline: 2px solid var(--accent-strong);
+  outline-offset: -2px;
+  background: var(--accent-wash);
+}
+table.contact-table tbody tr:last-child td {
+  border-bottom: none;
+}
+/* The "nothing matched" row needs to read as a sentence, not a clipped cell. */
+table.contact-table td.no-truncate {
+  white-space: normal;
+  cursor: default;
+}
+
+/* A column heading plus its filter caret, kept narrow so the heading cell
+   never forces the column wider than its share. */
+.col-head {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+}
+/* Headings wrap onto a second line rather than truncating. With
+   table-layout: fixed that costs a little header height and nothing else, and
+   a wrapped heading reads better than a clipped one. */
+.col-head-label {
+  min-width: 0;
+  white-space: normal;
+  overflow-wrap: break-word;
+}
+.col-caret {
+  flex: none;
+  font: inherit;
+  font-size: 9px;
+  line-height: 1;
+  color: var(--text-muted);
+  background: none;
+  border: none;
+  padding: 2px;
+  cursor: pointer;
+}
+.col-caret:hover {
+  color: var(--text-primary);
+}
+.col-caret.is-active {
+  color: var(--accent);
+}
+
+/* The filter menu is placed in viewport coordinates by MediaListTable, so the
+   table's own scrolling box cannot clip it. */
+.col-menu {
+  position: fixed;
+  z-index: 40;
+  width: 260px;
+  max-height: 320px;
+  overflow-y: auto;
+  background: var(--surface-raised);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  box-shadow: 0 14px 34px rgba(0, 0, 0, 0.55);
+  padding: 6px;
+}
+.col-menu-item {
+  display: block;
+  width: 100%;
+  text-align: left;
+  font: inherit;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  background: none;
+  border: none;
+  border-radius: 4px;
+  padding: 7px 9px;
+  cursor: pointer;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.col-menu-item:hover {
+  background: var(--bg-rise);
+  color: var(--text-primary);
+}
+.col-menu-item.is-chosen {
+  color: var(--accent-strong);
+}
+
+/* ============ CONTACT DETAIL POPUP ============ */
+/* The contact page and the notes lead, because those are the two the owner
+   reaches for first. Everything else the sheet holds follows underneath. */
+.detail-primary {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  background: var(--bg-rise);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--accent);
+  border-radius: 4px;
+  padding: 16px 18px;
+  margin-bottom: 20px;
+}
+.detail-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px 24px;
+}
+.detail-field {
+  min-width: 0;
+}
+.detail-field.is-wide {
+  grid-column: 1 / -1;
+}
+.detail-value {
+  font-size: 13.5px;
+  color: var(--text-secondary);
+  line-height: 1.6;
+  word-break: break-word;
+}
+
 .col-sort {
   font: inherit;
   font-size: 11px;
@@ -1229,23 +1237,12 @@ table.sticky-head td {
   color: var(--accent);
   font-size: 11px;
 }
-.cat-stack {
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
-  min-width: 110px;
-}
-.cat-line {
-  font-size: 12px;
-  color: var(--text-secondary);
-  line-height: 1.35;
-}
 /* Marks a Media List row whose person is also on the Top Contacts tab. */
 .top-star {
   color: var(--status-pending);
   font-size: 13px;
   line-height: 1;
-  margin-top: 2px;
+  margin-right: 4px;
 }
 .pager {
   display: flex;
@@ -1280,5 +1277,11 @@ table.sticky-head td {
   }
   .collapse-body {
     padding: 16px 14px;
+  }
+  .detail-grid {
+    grid-template-columns: 1fr;
+  }
+  .masthead-links {
+    justify-content: flex-start;
   }
 }

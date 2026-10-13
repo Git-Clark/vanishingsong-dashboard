@@ -1,14 +1,28 @@
+"use client";
+
+import { useState } from "react";
 import type { TopContactSection } from "@/lib/sheets";
+import {
+  CONTACT_COLUMNS,
+  ContactColGroup,
+  ContactDetailModal,
+  ContactRowCells,
+  fromTopContact,
+  rowKeyDown,
+  type ContactRecord,
+} from "./ContactTableParts";
 
 /**
  * The Top Contacts tab, inside a bar that is collapsed until it is clicked.
  *
- * Columns are reordered to match the Media List table, so the two sections
- * read the same way down the page. Team Member Involved is not shown as its
- * own column here. The three Category values stack in the first cell.
+ * Columns, widths, row shading and the detail popup all come from
+ * ContactTableParts, the same pieces the Media List table uses, so the two
+ * sections read identically. Team Member Involved is not one of the eight
+ * columns, it appears in the popup instead.
  */
 export default function TopContactsSections({ sections }: { sections: TopContactSection[] }) {
   const total = sections.reduce((sum, s) => sum + s.contacts.length, 0);
+  const [openRecord, setOpenRecord] = useState<ContactRecord | null>(null);
 
   return (
     <details className="collapse-panel">
@@ -33,61 +47,53 @@ export default function TopContactsSections({ sections }: { sections: TopContact
             are grouped on the tab.
           </div>
         ) : (
-          sections.map((section) => (
-            <div className="region-group" key={section.title}>
-              <div className="region-heading">
-                <h3>{section.title}</h3>
-                <span className="n">
-                  {section.contacts.length} contact{section.contacts.length === 1 ? "" : "s"}
-                </span>
-              </div>
-              <div className="table-wrap">
-                <table className="full-table">
+          <>
+            <p className="panel-caption">Click any row to see the full record.</p>
+            {sections.map((section) => (
+              <div className="region-group" key={section.title}>
+                <div className="region-heading">
+                  <h3>{section.title}</h3>
+                  <span className="n">
+                    {section.contacts.length} contact{section.contacts.length === 1 ? "" : "s"}
+                  </span>
+                </div>
+                <table className="contact-table">
+                  <ContactColGroup />
                   <thead>
                     <tr>
-                      <th>Category</th>
-                      <th>Name</th>
-                      <th>Role</th>
-                      <th>Publication</th>
-                      <th>Email</th>
-                      <th>Social or Contact Page</th>
-                      <th>Region</th>
-                      <th>Content Type</th>
-                      <th>Recent Relevant Work</th>
-                      <th>Notes</th>
+                      {CONTACT_COLUMNS.map((label) => (
+                        <th key={label}>{label}</th>
+                      ))}
                     </tr>
                   </thead>
                   <tbody>
-                    {section.contacts.map((c, i) => (
-                      <tr key={`${c.email || c.name}-${i}`}>
-                        <td>
-                          <div className="cat-stack">
-                            {c.categories.length === 0 && <span className="cat-line">-</span>}
-                            {c.categories.map((cat) => (
-                              <span className="cat-line" key={cat}>
-                                {cat}
-                              </span>
-                            ))}
-                          </div>
-                        </td>
-                        <td className="cell-strong">{c.name || "-"}</td>
-                        <td className="cell-secondary">{c.role || "-"}</td>
-                        <td className="cell-secondary">{c.publication || "-"}</td>
-                        <td className="cell-secondary wrap-cell">{c.email || "-"}</td>
-                        <td className="cell-secondary wrap-cell">{c.socialOrContactPage || "-"}</td>
-                        <td className="cell-secondary">{c.region || "-"}</td>
-                        <td className="cell-secondary">{c.contentType || "-"}</td>
-                        <td className="cell-secondary wrap-cell">{c.recentWork || "-"}</td>
-                        <td className="cell-secondary wrap-cell">{c.notes || "-"}</td>
-                      </tr>
-                    ))}
+                    {section.contacts.map((c, i) => {
+                      const record = fromTopContact(c);
+                      const open = () => setOpenRecord(record);
+                      return (
+                        <tr
+                          key={`${c.email || c.name}-${i}`}
+                          tabIndex={0}
+                          aria-haspopup="dialog"
+                          title="Open the full record"
+                          onClick={open}
+                          onKeyDown={rowKeyDown(open)}
+                        >
+                          <ContactRowCells record={record} />
+                        </tr>
+                      );
+                    })}
                   </tbody>
                 </table>
               </div>
-            </div>
-          ))
+            ))}
+          </>
         )}
       </div>
+
+      {openRecord && (
+        <ContactDetailModal record={openRecord} onClose={() => setOpenRecord(null)} />
+      )}
     </details>
   );
 }
