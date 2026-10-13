@@ -207,29 +207,32 @@ function toIsoDate(raw: string): string {
 
 /* ============ FESTIVALS ============ */
 
-const VALID_STATUS: FestivalStatus[] = ["Pending", "Not accepted", "Accepted"];
-
 export async function getFestivals(): Promise<Festival[]> {
   const sheetId = process.env.FESTIVALS_SHEET_ID;
   if (!credentialsConfigured(sheetId)) {
     return SAMPLE_FESTIVALS;
   }
   try {
-    const rows = await fetchRows(sheetId as string, "Festivals!A2:E");
+    // The tab is called "Festival Schedule", not "Festivals". The quoting is
+    // required because of the space.
+    const rows = await fetchRows(sheetId as string, "'Festival Schedule'!A2:F");
     if (!rows.length) return SAMPLE_FESTIVALS;
     return rows
       .filter((r) => r[0])
       .map((r) => {
         const [name, notify, event, location, status] = r;
-        const cleanStatus = VALID_STATUS.includes(status as FestivalStatus)
-          ? (status as FestivalStatus)
-          : "Pending";
+        // Dates arrive in whatever format the sheet is displaying, usually
+        // M/D/YYYY, so normalise them. Everything downstream assumes ISO.
+        const notifyIso = toIsoDate(notify ?? "");
         return {
           name: name?.trim() ?? "",
-          notifyIso: notify?.trim() || null,
-          eventIso: event?.trim() ?? "",
+          notifyIso: notifyIso || null,
+          eventIso: toIsoDate(event ?? ""),
           location: location?.trim() ?? "",
-          status: cleanStatus,
+          // Pass the status through as written rather than coercing anything
+          // unrecognised to Pending. Clark types these himself and has already
+          // used Withdrawn, which was being silently reported as Pending.
+          status: (status?.trim() || "Pending") as FestivalStatus,
         };
       });
   } catch (err) {

@@ -1,19 +1,26 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import type { Festival, FestivalStatus } from "@/lib/sampleData";
+import type { Festival } from "@/lib/sampleData";
 import { formatShort } from "@/lib/dates";
 
-const STATUS_CLASS: Record<FestivalStatus, string> = {
+const STATUS_CLASS: Record<string, string> = {
   Pending: "pending",
   "Not accepted": "critical",
   Accepted: "good",
+  Withdrawn: "neutral",
 };
 
-type FilterKey = "all" | "pending" | "good" | "critical";
+/** Anything typed into the sheet that we do not style explicitly reads neutral. */
+export function statusClass(status: string): string {
+  return STATUS_CLASS[status] ?? "neutral";
+}
+
+/** Pill order. Any other status the sheet contains is appended after these. */
+const PILL_ORDER = ["Pending", "Accepted", "Not accepted", "Withdrawn"];
 
 export default function FestivalsTable({ festivals }: { festivals: Festival[] }) {
-  const [filter, setFilter] = useState<FilterKey>("all");
+  const [filter, setFilter] = useState<string>("all");
 
   const sorted = useMemo(
     () =>
@@ -26,13 +33,22 @@ export default function FestivalsTable({ festivals }: { festivals: Festival[] })
     [festivals]
   );
 
+  // Counted from whatever the sheet actually contains, so a status Clark adds
+  // later shows up on its own rather than vanishing into Pending.
   const counts = useMemo(() => {
-    const c: Record<FestivalStatus, number> = { Pending: 0, "Not accepted": 0, Accepted: 0 };
-    for (const f of sorted) c[f.status]++;
+    const c: Record<string, number> = {};
+    for (const f of sorted) c[f.status] = (c[f.status] ?? 0) + 1;
     return c;
   }, [sorted]);
 
-  const visible = filter === "all" ? sorted : sorted.filter((f) => STATUS_CLASS[f.status] === filter);
+  const pills = useMemo(() => {
+    const present = Object.keys(counts);
+    const known = PILL_ORDER.filter((s) => present.includes(s));
+    const extra = present.filter((s) => !PILL_ORDER.includes(s)).sort();
+    return [...known, ...extra];
+  }, [counts]);
+
+  const visible = filter === "all" ? sorted : sorted.filter((f) => f.status === filter);
 
   return (
     <>
@@ -43,24 +59,15 @@ export default function FestivalsTable({ festivals }: { festivals: Festival[] })
         >
           All <span className="n">{sorted.length}</span>
         </button>
-        <button
-          className={`filter-pill${filter === "pending" ? " is-active" : ""}`}
-          onClick={() => setFilter("pending")}
-        >
-          Pending <span className="n">{counts.Pending}</span>
-        </button>
-        <button
-          className={`filter-pill${filter === "good" ? " is-active" : ""}`}
-          onClick={() => setFilter("good")}
-        >
-          Accepted <span className="n">{counts.Accepted}</span>
-        </button>
-        <button
-          className={`filter-pill${filter === "critical" ? " is-active" : ""}`}
-          onClick={() => setFilter("critical")}
-        >
-          Not Accepted <span className="n">{counts["Not accepted"]}</span>
-        </button>
+        {pills.map((status) => (
+          <button
+            key={status}
+            className={`filter-pill${filter === status ? " is-active" : ""}`}
+            onClick={() => setFilter(status)}
+          >
+            {status} <span className="n">{counts[status]}</span>
+          </button>
+        ))}
       </div>
 
       <div className="panel">
@@ -92,7 +99,7 @@ export default function FestivalsTable({ festivals }: { festivals: Festival[] })
                   </td>
                   <td className="date-cell num">{formatShort(f.eventIso)}</td>
                   <td>
-                    <span className={`status-chip ${STATUS_CLASS[f.status]}`}>{f.status}</span>
+                    <span className={`status-chip ${statusClass(f.status)}`}>{f.status}</span>
                   </td>
                   <td>
                     <span className="status-chip neutral">Unconfirmed</span>

@@ -9,7 +9,19 @@
 //
 // Do not edit festival facts here casually, this is real campaign data.
 
-export type FestivalStatus = "Pending" | "Not accepted" | "Accepted";
+/**
+ * The statuses we style and count explicitly. The sheet is hand-typed, so a
+ * status outside this list is still displayed as written, with a neutral chip,
+ * rather than being coerced into one of these.
+ */
+export const KNOWN_FESTIVAL_STATUSES = [
+  "Pending",
+  "Not accepted",
+  "Accepted",
+  "Withdrawn",
+] as const;
+
+export type FestivalStatus = (typeof KNOWN_FESTIVAL_STATUSES)[number] | (string & {});
 
 export interface Festival {
   name: string;
