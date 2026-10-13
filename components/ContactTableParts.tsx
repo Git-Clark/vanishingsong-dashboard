@@ -67,22 +67,27 @@ export function fromTopContact(c: TopContact): ContactRecord {
   };
 }
 
-/** The eight columns, in the order the owner asked for, both tables. */
+/** The six columns, in the order the owner asked for, both tables.
+ *
+ * Name leads, then the three fields that identify who the person is and where
+ * they work. The two that wrap to a second line most often, Content Type and
+ * Category, sit at the end, so a tall row grows on the right rather than
+ * pushing the name out of line. */
 // Email and Recent Work were dropped from the table at the owner's request.
 // Both still appear in the detail popup, so nothing is lost, and the six
 // remaining columns each get more room.
 export const CONTACT_COLUMNS = [
-  "Category",
-  "Content Type",
   "Name",
   "Role",
-  "Region",
   "Org/ Publication",
+  "Region",
+  "Content Type",
+  "Category",
 ] as const;
 
 /**
- * Content Type and Role drop away on a phone, leaving Category, Name, Region
- * and Org/ Publication. Headers, cells and colgroup entries all carry this
+ * Content Type and Role drop away on a phone, leaving Name, Org/ Publication,
+ * Region and Category. Headers, cells and colgroup entries all carry this
  * class so they disappear together and the remaining widths still add up.
  */
 export const NARROW_HIDDEN_COLUMNS: readonly string[] = ["Content Type", "Role"];
@@ -99,53 +104,68 @@ export function colClass(label: string): string | undefined {
 export function ContactColGroup() {
   return (
     <colgroup>
-      <col className="cw-category" />
-      <col className="cw-contenttype col-hide-narrow" />
       <col className="cw-name" />
       <col className="cw-role col-hide-narrow" />
-      <col className="cw-region" />
       <col className="cw-org" />
+      <col className="cw-region" />
+      <col className="cw-contenttype col-hide-narrow" />
+      <col className="cw-category" />
     </colgroup>
   );
 }
 
 /**
- * The six cells of one row. Truncation is handled in CSS, except in the
- * Category cell, where each value gets its own line on every screen size
- * rather than being joined into one long comma-separated string.
+ * The six cells of one row, in the owner's order: Name, Role, Org/
+ * Publication, Region, Content Type, Category.
+ *
+ * Three of them are allowed to run onto a second line, because their values
+ * genuinely are long: Role, Org/ Publication and Category. The other three
+ * stay on one line and truncate. Category goes further and puts each of its
+ * values on its own line.
  *
  * `col-hide-narrow` marks the two columns that drop away on a phone, leaving
- * Category, Name, Region and Org/ Publication. Everything hidden is still in
+ * Name, Org/ Publication, Region and Category. Everything hidden is still in
  * the detail popup a tap away.
  */
+/** The amber star marking a contact who is also on the Top Contacts tab. */
+function TopStar() {
+  return (
+    <span className="top-star" title="Also on the Top Contacts tab, a priority contact">
+      <span aria-hidden="true">{"★"}</span>
+      <span className="sr-only">Also on the Top Contacts tab</span>
+    </span>
+  );
+}
+
 export function ContactRowCells({ record, star }: { record: ContactRecord; star?: boolean }) {
   const cats = record.categories.filter(Boolean);
   return (
     <>
+      <td className="cell-strong">{record.name || "-"}</td>
+      <td className="cell-secondary wrap-cell col-hide-narrow">{record.role || "-"}</td>
+      <td className="cell-secondary wrap-cell">{record.org || "-"}</td>
+      <td className="cell-secondary">{record.region || "-"}</td>
+      <td className="cell-secondary col-hide-narrow">{record.contentType || "-"}</td>
       <td className="cat-cell" title={cats.join(", ") || undefined}>
-        {star && (
-          <span className="top-star" title="Also on the Top Contacts tab, a priority contact">
-            <span aria-hidden="true">{"★"}</span>
-            <span className="sr-only">Also on the Top Contacts tab</span>
-          </span>
-        )}
         {cats.length === 0 ? (
-          <span className="cell-secondary">-</span>
+          <span className="cell-secondary">
+            {star && <TopStar />}
+            {"-"}
+          </span>
         ) : (
           <span className="cat-stack">
-            {cats.map((c) => (
+            {cats.map((c, i) => (
               <span className="cat-line cell-secondary" key={c}>
+                {/* The star rides on the first category rather than taking a
+                    line of its own, which kept every starred row a line
+                    taller than it needed to be. */}
+                {star && i === 0 && <TopStar />}
                 {c}
               </span>
             ))}
           </span>
         )}
       </td>
-      <td className="cell-secondary col-hide-narrow">{record.contentType || "-"}</td>
-      <td className="cell-strong">{record.name || "-"}</td>
-      <td className="cell-secondary col-hide-narrow">{record.role || "-"}</td>
-      <td className="cell-secondary">{record.region || "-"}</td>
-      <td className="cell-secondary">{record.org || "-"}</td>
     </>
   );
 }

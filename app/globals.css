@@ -43,6 +43,18 @@
   --status-critical-bg: rgba(193, 91, 69, 0.14);
   --status-neutral: #4a4a4a;
 
+  /* The contact tables, and only those, run on light rows. A long press list
+     was hard to read on the near-black panel, so the rows alternate light gray
+     and medium gray with near-black text, while the heading strip above them
+     stays dark. Contrast on the darker of the two rows is 11.4:1, well past
+     the 4.5:1 the accessibility guidelines ask for. */
+  --row-light: #e8e8ea;
+  --row-medium: #d2d2d6;
+  --row-hover: #c3d8f2;
+  --row-line: #bcbcc2;
+  --row-text: #26262b;
+  --row-text-strong: #101013;
+
   --shadow: 0 1px 0 rgba(0, 0, 0, 0.4);
   color-scheme: dark;
 }
@@ -1064,29 +1076,45 @@ table.contact-table th {
 }
 table.contact-table td {
   padding: 11px 8px;
-  border-bottom: 1px solid var(--border-soft);
-  vertical-align: middle;
+  border-bottom: 1px solid var(--row-line);
+  /* Top, not middle: three columns can run to a second line, and a one-line
+     name floating in the middle of a tall row reads as misaligned. */
+  vertical-align: top;
   overflow: hidden;
   white-space: nowrap;
   text-overflow: ellipsis;
+  /* The rows are light, so the dark-theme text colours would disappear. Every
+     cell reads near-black from here down, and the two cell weights become a
+     difference in weight and in how dark, not light against dark. */
+  color: var(--row-text);
 }
-/* Two subtly different dark tones rather than literal light and dark grey,
-   which would be unreadable on this near-black ground. Odd rows are the panel
-   itself, even rows sit one step up. */
+table.contact-table td.cell-strong {
+  color: var(--row-text-strong);
+  font-weight: 700;
+}
+table.contact-table td .cell-secondary,
+table.contact-table td.cell-secondary {
+  color: var(--row-text);
+}
+
+/* Light gray and medium gray, alternating, at the owner's request: the dark
+   panel was hard to read a long list on. The heading strip above stays dark so
+   the table still belongs to the rest of the dashboard. */
 table.contact-table tbody tr {
   cursor: pointer;
+  background: var(--row-light);
 }
 table.contact-table tbody tr:nth-child(even) {
-  background: var(--surface-raised);
+  background: var(--row-medium);
 }
-/* Kept clearly apart from both row tones by being tinted, not just lighter. */
+/* Tinted rather than just lighter, so it stands apart from both row tones. */
 table.contact-table tbody tr:hover {
-  background: var(--accent-wash);
+  background: var(--row-hover);
 }
 table.contact-table tbody tr:focus-visible {
   outline: 2px solid var(--accent-strong);
   outline-offset: -2px;
-  background: var(--accent-wash);
+  background: var(--row-hover);
 }
 table.contact-table tbody tr:last-child td {
   border-bottom: none;
@@ -1224,12 +1252,37 @@ table.contact-table td.no-truncate {
   color: var(--accent);
   font-size: 11px;
 }
-/* Marks a Media List row whose person is also on the Top Contacts tab. */
+/* Marks a Media List row whose person is also on the Top Contacts tab. A
+   deeper amber than the status pills use, because it now sits on a light row
+   rather than a dark one. */
 .top-star {
-  color: var(--status-pending);
+  color: #a8650c;
   font-size: 13px;
   line-height: 1;
   margin-right: 4px;
+}
+/* Heading and legend sit on one line, and drop to two if the panel is narrow
+   enough that they would otherwise collide. */
+.panel-title-row {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+/* The same star in the legend beside the Media List heading, where it sits on
+   the dark panel and so keeps the brighter tone. */
+.star-key {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11.5px;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+.star-key .star-key-mark {
+  color: var(--status-pending);
+  font-size: 13px;
+  line-height: 1;
 }
 .pager {
   display: flex;
@@ -1276,20 +1329,25 @@ table.contact-table td.no-truncate {
 /* ============ CONTACT TABLE COLUMN WIDTHS ============
    The widths used to be inline styles on each <col>. They are classes now so a
    media query can re-proportion them once two columns drop away on a phone. */
-.cw-category { width: 19%; }
-.cw-contenttype { width: 12%; }
-.cw-name { width: 17%; }
-.cw-role { width: 22%; }
+.cw-name { width: 18%; }
+.cw-role { width: 17%; }
+.cw-org { width: 20%; }
 .cw-region { width: 12%; }
-.cw-org { width: 18%; }
+.cw-contenttype { width: 12%; }
+.cw-category { width: 21%; }
 
-/* Category shows one value per line rather than a long comma-separated run,
-   on every screen size. This is the one cell allowed to be more than one line
-   tall, so it opts out of the table's nowrap and ellipsis. */
-table.contact-table td.cat-cell {
+/* The three columns the owner expects to run long: Role, Org/ Publication and
+   Category. They wrap to a second line instead of being cut off, so a job
+   title or a publication name arrives whole. Name, Region and Content Type
+   stay on one line, which keeps the rows from growing taller than they need
+   to be. */
+table.contact-table td.cat-cell,
+table.contact-table td.wrap-cell {
   white-space: normal;
   text-overflow: clip;
   vertical-align: top;
+  overflow-wrap: break-word;
+  line-height: 1.35;
 }
 .cat-stack {
   display: flex;
@@ -1313,10 +1371,12 @@ table.contact-table td.cat-cell {
   .col-hide-narrow {
     display: none;
   }
-  .cw-category { width: 28%; }
-  .cw-name { width: 26%; }
-  .cw-region { width: 20%; }
-  .cw-org { width: 26%; }
+  /* Category gets the largest share on a phone: it stacks several values and
+     the star eats into its first line. */
+  .cw-name { width: 24%; }
+  .cw-org { width: 24%; }
+  .cw-region { width: 18%; }
+  .cw-category { width: 34%; }
 
   /* On a phone the rows are already tall because Category stacks, so let every
      cell wrap at spaces rather than truncate. Truncating here cost more than
@@ -1344,7 +1404,7 @@ table.contact-table td.cat-cell {
   /* The two columns that carry the longest single words. A point smaller is
      invisible next to the other columns and keeps whole words on one line. */
   table.contact-table td.cat-cell,
-  table.contact-table td:last-child {
+  table.contact-table td.wrap-cell {
     font-size: 10.5px;
   }
 

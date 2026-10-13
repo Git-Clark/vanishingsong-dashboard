@@ -36,13 +36,16 @@ type SortKey = "name" | "email";
  * Email and Recent Work are no longer columns, but the search box still looks
  * at both, and both appear in the detail popup.
  */
+// The index of each label has to match CONTACT_COLUMNS exactly, or a heading
+// ends up over the wrong column. Order there: Name, Role, Org/ Publication,
+// Region, Content Type, Category.
 const COLUMNS: { key: ColumnKey; label: string; mode: "filter" | "sort" }[] = [
-  { key: "categories", label: CONTACT_COLUMNS[0], mode: "filter" },
-  { key: "contentType", label: CONTACT_COLUMNS[1], mode: "filter" },
-  { key: "name", label: CONTACT_COLUMNS[2], mode: "sort" },
-  { key: "role", label: CONTACT_COLUMNS[3], mode: "filter" },
-  { key: "region", label: CONTACT_COLUMNS[4], mode: "filter" },
-  { key: "organization", label: CONTACT_COLUMNS[5], mode: "filter" },
+  { key: "name", label: CONTACT_COLUMNS[0], mode: "sort" },
+  { key: "role", label: CONTACT_COLUMNS[1], mode: "filter" },
+  { key: "organization", label: CONTACT_COLUMNS[2], mode: "filter" },
+  { key: "region", label: CONTACT_COLUMNS[3], mode: "filter" },
+  { key: "contentType", label: CONTACT_COLUMNS[4], mode: "filter" },
+  { key: "categories", label: CONTACT_COLUMNS[5], mode: "filter" },
 ];
 
 /** Every value a row holds for one column. Category has up to three. */
@@ -276,7 +279,17 @@ export default function MediaListTable({
   return (
     <div className="panel">
       <div className="panel-head section-head">
-        <h3 className="panel-title">Media List</h3>
+        <div className="panel-title-row">
+          <h3 className="panel-title">Media List</h3>
+          {/* What the star in the Category column means, said once, here,
+              rather than left to the hover tooltip on each row. */}
+          <span className="star-key">
+            <span className="star-key-mark" aria-hidden="true">
+              {"★"}
+            </span>
+            Recc. Top Contacts
+          </span>
+        </div>
         <div className="section-tools">
           {filtersActive && (
             <button type="button" className="filter-pill" onClick={clearAll}>
